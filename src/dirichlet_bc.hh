@@ -25,12 +25,16 @@ public :
     //! Set value for potential at outer domain boundaries
 
     int physgroup_index =-1;
+    int counter = 0;
     for (IntersectionIterator ii = gv.ibegin(e); ii != gv.iend(e) ; ++ii) {
-      if (ii->boundary())  {
+      counter++;
+      std::cout << ii->geometry().center() << " " << (int) ii->boundary() << std::endl;
+      if (ii->boundary() ) {
         physgroup_index = pg[ii->boundarySegmentIndex()];
         switch (component){
           case 0:
             if (s.surfaces[physgroup_index].coulombBtype == 0) {
+              std::cout << ii->geometry().center() << " " << e.geometry().center() << " " << physgroup_index << " asdf" << std::endl;
               y = s.surfaces[physgroup_index].coulombPotential; return;
             }
           case 1:
@@ -44,7 +48,7 @@ public :
         }
       }
     }
-    std::cout << e.geometry().global(xlocal) << " inner" << std::endl;
+    std::cout << e.geometry().global(xlocal) << " " << e.geometry().center() << " " << counter << " inner" << std::endl;
     return;
   }
 

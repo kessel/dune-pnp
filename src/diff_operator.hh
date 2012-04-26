@@ -15,12 +15,12 @@
  *
  * \tparam B a function indicating the type of boundary condition
  */
-template<class B, class F>
+template<class B, class F, class S, class FluxContainer>
 class DiffOperator : 
-  public Dune::PDELab::NumericalJacobianApplyVolume<DiffOperator<B, F> >,
-  public Dune::PDELab::NumericalJacobianVolume<DiffOperator<B, F> >,
-  public Dune::PDELab::NumericalJacobianApplyBoundary<DiffOperator<B, F> >,
-  public Dune::PDELab::NumericalJacobianBoundary<DiffOperator<B, F> >,
+  public Dune::PDELab::NumericalJacobianApplyVolume<DiffOperator<B, F, S, FluxContainer> >,
+  public Dune::PDELab::NumericalJacobianVolume<DiffOperator<B, F, S, FluxContainer> >,
+  public Dune::PDELab::NumericalJacobianApplyBoundary<DiffOperator<B, F, S, FluxContainer> >,
+  public Dune::PDELab::NumericalJacobianBoundary<DiffOperator<B, F, S, FluxContainer> >,
   public Dune::PDELab::FullVolumePattern,
   public Dune::PDELab::LocalOperatorDefaultFlags
 {
@@ -30,10 +30,10 @@ public:
 
   // residual assembly flags
   enum { doAlphaVolume = true };
-  enum { doAlphaBoundary = false };                                // assemble boundary
+  enum { doAlphaBoundary = true };                                // assemble boundary
   
-  DiffOperator (const B& b_, const F& f_, unsigned int intorder_=2)  // needs boundary cond. type
-    : b(b_), f(f_), intorder(intorder_)
+  DiffOperator (const B& b_, const F& f_, S& s_, FluxContainer fluxContainer_, unsigned int intorder_=2)  // needs boundary cond. type
+    : b(b_), f(f_), intorder(intorder_), s(s_), fluxContainer(fluxContainer_)
   {}
 
   // volume integral depending on test and ansatz functions
@@ -148,10 +148,8 @@ public:
           u += x_s[i]*phi[i];
             
         // evaluate flux boundary condition
-        Dune::FieldVector<RF,dim> 
-          globalpos = ig.geometry().global(it->position());
         RF j;
-        if (globalpos[1]<0.5) j = 1.0; else j = -1.0; // some outflow 
+        j = fluxContainer[ig.intersection().boundarySegmentIndex()];
             
         // integrate j
         RF factor = it->weight()*ig.geometry().integrationElement(it->position());
@@ -163,5 +161,7 @@ public:
 private:
   const B& b;
   const F& f;
+  const S& s;
+  const FluxContainer fluxContainer;
   unsigned int intorder;
 };

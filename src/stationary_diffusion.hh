@@ -1,7 +1,10 @@
 
+#include "datawriter.hh"
+#include <dune/common/mpihelper.hh>
+#include <string>
 
 template<class GV>
-void stationary_diffusion(Sysparams s, GV gv, std::vector<int> boundaryIndexToEntity, std::vector<int> elementIndexToEntity) {
+void stationary_diffusion(Sysparams s, GV gv, std::vector<int> boundaryIndexToEntity, std::vector<int> elementIndexToEntity, Dune::MPIHelper& helper) {
   typedef typename GV::Grid::ctype Coord;
   typedef typename GV::Grid GridType;
   typedef double Real;
@@ -11,7 +14,9 @@ void stationary_diffusion(Sysparams s, GV gv, std::vector<int> boundaryIndexToEn
   // <<<2>>> Make grid function space
   typedef Dune::PDELab::Pk2DLocalFiniteElementMap<GV, Coord,Real, 1> FEM;
   FEM fem(gv);
-  typedef Dune::PDELab::OverlappingConformingDirichletConstraints CON;     // constraints class
+  //typedef Dune::PDELab::P1LocalFiniteElementMap<Coord,Real, dim> FEM;
+  //FEM fem;
+  typedef Dune::PDELab::ConformingDirichletConstraints CON;     // constraints class
   typedef Dune::PDELab::ISTLVectorBackend<1> VBE;
   typedef Dune::PDELab::GridFunctionSpace<GV,FEM,CON,VBE> GFS;
   GFS gfs(gv,fem);
@@ -31,13 +36,34 @@ void stationary_diffusion(Sysparams s, GV gv, std::vector<int> boundaryIndexToEn
   U u(gfs ,0.0);
 
   Dune::PDELab::interpolate(bce,gfs ,u);
-  
+      
 //  typedef Force<Sysparams, template Dune::FieldVector<GridType::ctype,dim> > F;
 //  F f(s);
+//
+  typedef std::vector<double> FluxContainer;
+  FluxContainer fluxContainer;
+  for (int i = 0; i<gv.size(1); i++) {
+      fluxContainer.push_back(-1000);
+  }
+
+  typedef typename GV::template Codim<0>::Iterator GVIT;
+  typedef typename GV::IntersectionIterator IntersectionIterator;
+  
+  GVIT it = gv.template begin<0>();
+
+  for (; it != gv.template end<0>(); ++it) {
+    for (IntersectionIterator iit = gv.ibegin(*it); iit!=  gv.iend(*it); ++iit) {
+      if (iit->boundary()) {
+        int physgroup_index=boundaryIndexToEntity[iit->boundarySegmentIndex()];
+        fluxContainer[iit->boundarySegmentIndex()]=s.surfaces[physgroup_index].coulombFlux;
+      }
+    }
+  }
+
 
   int f = 5;
-  typedef DiffOperator<B, int> LOP;
-  LOP lop(b, f, 5);
+  typedef DiffOperator<B, int, Sysparams, FluxContainer> LOP;
+  LOP lop(b, f, s, fluxContainer);
 
 
 
@@ -64,5 +90,14 @@ void stationary_diffusion(Sysparams s, GV gv, std::vector<int> boundaryIndexToEn
   Dune::GnuplotWriter<GV> gnuplotwriter(gv);
   gnuplotwriter.addVertexData(u,"solution");
   gnuplotwriter.write("yeah.dat"); 
+  
+  int argc = 0;
+//  char**& argv = 0;
+  
+  DataWriter<GV, double, 0> dw(gv, helper);
+  std::string s1("solution");
+  std::string s2("solution.dat");
+  dw.writeIpbsCellData(gfs, u, s1, s2);
+
 }
 

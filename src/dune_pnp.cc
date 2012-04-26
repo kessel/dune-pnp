@@ -19,8 +19,7 @@ int main(int argc, char** argv)
         <<" processes!"<<std::endl;
 
     std::string f("hallo");
-
-    PnpSolverMain p;
+    PnpSolverMain p(helper);
     p.run(f);
 
 

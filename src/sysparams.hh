@@ -12,7 +12,7 @@ class Sysparams {
     Sysparams();
     ~Sysparams();
     void readConfigFile(std::string filename);
-    const static double K = 1;
+    double K;
     std::vector<Surface> surfaces;
     std::string meshfile;
     int n_surfaces;
