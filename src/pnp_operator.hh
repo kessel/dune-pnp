@@ -30,7 +30,7 @@ public:
 
   // residual assembly flags
   enum { doAlphaVolume = true };
-  enum { doAlphaBoundary = false };                                // assemble boundary
+  enum { doAlphaBoundary = true };                                // assemble boundary
   
   PnpOperator (const PhiB& phiB_, const CpB& cpB_, const CmB& cmB_, const F& f_, S& s_, FluxContainer fluxContainer_, unsigned int intorder_=2)  // needs boundary cond. type
     : phiB(phiB_), cpB(cpB_), cmB(cmB_),  f(f_), intorder(intorder_), s(s_), fluxContainer(fluxContainer_)
@@ -107,91 +107,71 @@ public:
         RF a = 0; 
         RF factor = it->weight()*eg.geometry().integrationElement(it->position());
 
-        ///////////////////// and now subspace by subspace
-
         // evaluate basis functions on reference element
         std::vector<RangeType> phi_phi(lfsu_phi.size());
         lfsu_phi.finiteElement().localBasis().evaluateFunction(it->position(),phi_phi);
-
-        // compute u at integration point
-        RF u_phi=0.0;
-        for (size_type i=0; i<lfsu_phi.size(); i++)
-          u_phi += x[lfsu_phi.localIndex(i)]*phi_phi[lfsu_phi.localIndex(i)];
-
-        // evaluate gradient of basis functions on reference element
-        std::vector<JacobianTypePhi> js_phi(lfsu_phi.size());
-        lfsu_phi.finiteElement().localBasis().evaluateJacobian(it->position(),js_phi);
-        
-        std::vector<Dune::FieldVector<RF,dim> > gradphi_phi(lfsu_phi.size());
-        for (size_type i=0; i<lfsu_phi.size(); i++)
-          jac.mv(js_phi[i][0],gradphi_phi[i]);
-
-        // compute gradient of u
-        Dune::FieldVector<RF,dim> gradu_phi(0.0);
-        for (size_type i=0; i<lfsu_phi.size(); i++)
-          gradu_phi.axpy(x[lfsu_phi.localIndex(i)],gradphi_phi[lfsu_phi.localIndex(i)]);
-
-        // integrate grad u * grad phi_i + a*u*phi_i - f phi_i
-        for (size_type i=0; i<lfsu_phi.size(); i++)
-          r[i] += ( gradu_phi*gradphi_phi[lfsu_phi.localIndex(i)] + a*u_phi*phi_phi[lfsu_phi.localIndex(i)] - F*phi_phi[lfsu_phi.localIndex(i)] )*factor; 
-
-        ////////////////////////// NOW CP /////////////////////////////////////////////
-        
-        // evaluate basis functions on reference element
-        std::vector<RangeType> sadf_asdf(lfsu_cp.size());
-        lfsu_cp.finiteElement().localBasis().evaluateFunction(it->position(),sadf_asdf);
-
-        // compute u at integration point
-        RF u_cp=0.0;
-        for (size_type i=0; i<lfsu_cp.size(); i++)
-          u_cp += x[lfsu_cp.localIndex(i)]*sadf_asdf[lfsu_cp.localIndex(i)];
-
-        // evaluate gradient of basis functions on reference element
-        std::vector<JacobianTypeCp> js_cp(lfsu_cp.size());
-        lfsu_cp.finiteElement().localBasis().evaluateJacobian(it->position(),js_cp);
-
-        // transform gradients from reference element to real element
-        std::vector<Dune::FieldVector<RF,dim> > gradsadf_asdf(lfsu_cp.size());
-        for (size_type i=0; i<lfsu_cp.size(); i++)
-          jac.mv(js_cp[i][0],gradsadf_asdf[i]);
-        
-        // compute gradient of u
-        Dune::FieldVector<RF,dim> gradu_cp(0.0);
-        for (size_type i=0; i<lfsu_cp.size(); i++)
-          gradu_cp.axpy(x[lfsu_cp.localIndex(i)],gradsadf_asdf[lfsu_cp.localIndex(i)]);
-
-        // integrate grad u * grad cp_i + a*u*cp_i - f cp_i
-        for (size_type i=0; i<lfsu_cp.size(); i++)
-          r[i] += ( gradu_cp*gradsadf_asdf[lfsu_cp.localIndex(i)] + a*u_cp*sadf_asdf[lfsu_cp.localIndex(i)] - F*sadf_asdf[lfsu_cp.localIndex(i)] )*factor; 
-
-        ///////////////////////// Finally CM ////////////////////////////////////////
-
-        // evaluate basis functions on reference element
+        std::vector<RangeType> phi_cp(lfsu_cp.size());
+        lfsu_cp.finiteElement().localBasis().evaluateFunction(it->position(),phi_cp);
         std::vector<RangeType> phi_cm(lfsu_cm.size());
         lfsu_cm.finiteElement().localBasis().evaluateFunction(it->position(),phi_cm);
 
         // compute u at integration point
+        RF u_phi=0.0;
+        for (size_type i=0; i<lfsu_phi.size(); i++)
+          u_phi += x[lfsu_phi.localIndex(i)]*phi_phi[i];
+        RF u_cp=0.0;
+        for (size_type i=0; i<lfsu_cp.size(); i++)
+          u_cp += x[lfsu_cp.localIndex(i)]*phi_cp[i];
         RF u_cm=0.0;
         for (size_type i=0; i<lfsu_cm.size(); i++)
-          u_cm += x[lfsu_cm.localIndex(i)]*phi_cm[lfsu_cm.localIndex(i)];
+          u_cm += x[lfsu_cm.localIndex(i)]*phi_cm[i];
 
         // evaluate gradient of basis functions on reference element
+        std::vector<JacobianTypePhi> js_phi(lfsu_phi.size());
+        lfsu_phi.finiteElement().localBasis().evaluateJacobian(it->position(),js_phi);
+        std::vector<JacobianTypeCp> js_cp(lfsu_cp.size());
+        lfsu_cp.finiteElement().localBasis().evaluateJacobian(it->position(),js_cp);
         std::vector<JacobianTypeCp> js_cm(lfsu_cm.size());
         lfsu_cm.finiteElement().localBasis().evaluateJacobian(it->position(),js_cm);
-
+        
         // transform gradients from reference element to real element
+        std::vector<Dune::FieldVector<RF,dim> > gradphi_phi(lfsu_phi.size());
+        for (size_type i=0; i<lfsu_phi.size(); i++)
+          jac.mv(js_phi[i][0],gradphi_phi[i]);
+        std::vector<Dune::FieldVector<RF,dim> > gradphi_cp(lfsu_cp.size());
+        for (size_type i=0; i<lfsu_cp.size(); i++)
+          jac.mv(js_cp[i][0],gradphi_cp[i]);
         std::vector<Dune::FieldVector<RF,dim> > gradphi_cm(lfsu_cm.size());
         for (size_type i=0; i<lfsu_cm.size(); i++)
           jac.mv(js_cm[i][0],gradphi_cm[i]);
-        
+
         // compute gradient of u
+        Dune::FieldVector<RF,dim> gradu_phi(0.0);
+        for (size_type i=0; i<lfsu_phi.size(); i++)
+          gradu_phi.axpy(x[lfsu_phi.localIndex(i)],gradphi_phi[i]);
+        Dune::FieldVector<RF,dim> gradu_cp(0.0);
+        for (size_type i=0; i<lfsu_cp.size(); i++)
+          gradu_cp.axpy(x[lfsu_cp.localIndex(i)],gradphi_cp[i]);
         Dune::FieldVector<RF,dim> gradu_cm(0.0);
         for (size_type i=0; i<lfsu_cm.size(); i++)
-          gradu_cm.axpy(x[lfsu_cm.localIndex(i)],gradphi_cm[lfsu_cm.localIndex(i)]);
+          gradu_cm.axpy(x[lfsu_cm.localIndex(i)],gradphi_cm[i]);
+
+        ////////////////////////// Weak Formulation /////////////////////////////////////////////
+        // integrate grad u * grad phi_i + a*u*phi_i - f phi_i
+        for (size_type i=0; i<lfsu_phi.size(); i++)
+          r[lfsu_phi.localIndex(i)] += ( gradu_phi*gradphi_phi[i] + a*u_phi*phi_phi[i] - F*phi_phi[i] )*factor; 
+
+        ////////////////////////// NOW CP /////////////////////////////////////////////
+        
+        // integrate grad u * grad cp_i + a*u*cp_i - f cp_i
+        for (size_type i=0; i<lfsu_cp.size(); i++)
+          r[lfsu_cp.localIndex(i)] += ( gradu_cp*gradphi_cp[i] + a*u_cp*phi_cp[i] - F*phi_cp[i] )*factor; 
+
+        ///////////////////////// Finally CM ////////////////////////////////////////
 
         // integrate grad u * grad cm_i + a*u*cm_i - f cm_i
         for (size_type i=0; i<lfsu_cm.size(); i++)
-          r[i] += ( gradu_cm*gradphi_cm[lfsu_cm.localIndex(i)] + a*u_cm*phi_cm[lfsu_cm.localIndex(i)] - F*phi_cm[lfsu_cm.localIndex(i)] )*factor; 
+          r[lfsu_cm.localIndex(i)] += ( gradu_cm*gradphi_cm[i] + a*u_cm*phi_cm[i] - F*phi_cm[i] )*factor; 
       }
   }
 
@@ -200,15 +180,6 @@ public:
   void alpha_boundary (const IG& ig, const LFSU& lfsu_s, const X& x_s, 
                        const LFSV& lfsv_s, R& r_s) const
   {
-    // some types
-    typedef typename LFSV::Traits::FiniteElementType::
-      Traits::LocalBasisType::Traits::DomainFieldType DF;
-    typedef typename LFSV::Traits::FiniteElementType::
-      Traits::LocalBasisType::Traits::RangeFieldType RF;
-    typedef typename LFSV::Traits::FiniteElementType::
-      Traits::LocalBasisType::Traits::RangeType RangeType;
-    typedef typename LFSV::Traits::SizeType size_type;
-        
  
     typedef typename LFSU::template Child<0>::Type LFSU_Phi;
     typedef typename LFSU::template Child<1>::Type LFSU_Cp;
@@ -223,6 +194,27 @@ public:
     const LFSV_Phi& lfsv_phi = lfsv_s.template getChild<0>();
     const LFSV_Cp&  lfsv_cp = lfsv_s.template getChild<1>();
     const LFSV_Cm&  lfsv_cm = lfsv_s.template getChild<2>();
+    
+    // some types
+    typedef typename LFSV_Phi::Traits::FiniteElementType::
+      Traits::LocalBasisType::Traits::DomainFieldType DF;
+
+    
+    typedef typename LFSV_Phi::Traits::FiniteElementType::
+      Traits::LocalBasisType::Traits::RangeFieldType RF;
+
+    typedef typename LFSU_Phi::Traits::FiniteElementType::
+      Traits::LocalBasisType::Traits::RangeType RangeType;
+
+    typedef typename LFSV_Phi::Traits::SizeType size_type;
+
+    typedef typename LFSU_Phi::Traits::FiniteElementType::
+      Traits::LocalBasisType::Traits::JacobianType JacobianTypePhi;
+    typedef typename LFSU_Cp::Traits::FiniteElementType::
+      Traits::LocalBasisType::Traits::JacobianType JacobianTypeCp;
+    typedef typename LFSU_Cm::Traits::FiniteElementType::
+      Traits::LocalBasisType::Traits::JacobianType JacobianTypeCm;
+        
 
     // dimensions
     const int dim = IG::dimension;
@@ -245,29 +237,47 @@ public:
         
         typename CpB::Traits::RangeType cmBtype;
         cmB.evaluate(ig,it->position(),cmBtype);
+          
+        // position of quadrature point in local coordinates of element 
+        Dune::FieldVector<DF,dim> local = ig.geometryInInside().global(it->position());
+        RF factor = it->weight()*ig.geometry().integrationElement(it->position());
+        RF j;
+
+
+        // evaluate basis functions on reference element
+        std::vector<RangeType> phi_phi(lfsu_phi.size());
+        lfsu_phi.finiteElement().localBasis().evaluateFunction(local,phi_phi);
+        std::vector<RangeType> phi_cp(lfsu_cp.size());
+        lfsu_cp.finiteElement().localBasis().evaluateFunction(local,phi_cp);
+        std::vector<RangeType> phi_cm(lfsu_cm.size());
+        lfsu_cm.finiteElement().localBasis().evaluateFunction(local,phi_cm);
 
         if (phiBtype < 1) {
  
-          // position of quadrature point in local coordinates of element 
-          Dune::FieldVector<DF,dim> local = ig.geometryInInside().global(it->position());
-  
-          // evaluate basis functions at integration point
-          std::vector<RangeType> phi_phi(lfsv_phi.size());
-          lfsv_phi.finiteElement().localBasis().evaluateFunction(local,phi_phi);
-  
-          // evaluate u (e.g. flux may depend on u)
-          RF u_phi=0.0;
-          for (size_type i=0; i<lfsu_phi.size(); i++)
-            u_phi += x_s[lfsu_phi.localIndex(i)]*phi_phi[i];
-              
           // evaluate flux boundary condition
-          RF j;
           j = fluxContainer[ig.intersection().boundarySegmentIndex()][0];
               
           // integrate j
-          RF factor = it->weight()*ig.geometry().integrationElement(it->position());
           for (size_type i=0; i<lfsv_phi.size(); i++)
             r_s[lfsu_phi.localIndex(i)] += j*phi_phi[i]*factor;
+        }
+        
+        if (cpBtype < 1) {
+          // evaluate flux boundary condition
+          j = fluxContainer[ig.intersection().boundarySegmentIndex()][1];
+ 
+          // integrate j
+          for (size_type i=0; i<lfsv_cp.size(); i++)
+            r_s[lfsu_cp.localIndex(i)] += j*phi_cp[i]*factor;
+        }
+        if (cmBtype < 1) {
+              
+          // evaluate flux boundary condition
+          j = fluxContainer[ig.intersection().boundarySegmentIndex()][2];
+              
+          // integrate j
+          for (size_type i=0; i<lfsv_cm.size(); i++)
+            r_s[lfsu_cm.localIndex(i)] += j*phi_cm[i]*factor;
         }
     }
 

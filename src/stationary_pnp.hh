@@ -71,26 +71,7 @@ void stationary_pnp(Sysparams s, GV gv, std::vector<int> boundaryIndexToEntity, 
 
 
 
-/*  typedef BCType<GV, std::vector<int>, Sysparams, 0 > B;              // boundary condition type
-  B b(gv, boundaryIndexToEntity, s);
 
-  typedef typename GFS::template ConstraintsContainer<Real>::Type CC;
-  CC cc;
-  Dune::PDELab::constraints(b,gfs,cc); 
-
-  typedef BCExtension<GV, Real,  std::vector<int>, Sysparams, 0 > BCE;
-  BCE bce(gv, boundaryIndexToEntity, s);
-
-
-  typedef typename GFS::template VectorContainer<Real>::Type U;
-  U u(gfs ,0.0);
-
-  Dune::PDELab::interpolate(bce,gfs ,u);
-      
-//  typedef Force<Sysparams, template Dune::FieldVector<GridType::ctype,dim> > F;
-//  F f(s);*/
-
-  
   typedef std::vector<std::vector<double > > FluxContainer;
   FluxContainer fluxContainer;
   
@@ -120,13 +101,15 @@ void stationary_pnp(Sysparams s, GV gv, std::vector<int> boundaryIndexToEntity, 
 
 
   int f = 5; 
-  typedef PnpOperator<PhiBC, CpBC, CmBC, int, Sysparams, FluxContainer> LOP;
-  LOP lop(phiB, cpB, cmB, f, s, fluxContainer);
 
   typedef typename GFS::template VectorContainer<Real>::Type U;
   U u(gfs ,0.0);
+  Dune::PDELab::set_shifted_dofs(cc,0.0,u);
 
   Dune::PDELab::interpolate(bce,gfs ,u);
+  
+  typedef PnpOperator<PhiBC_T, CpBC_T, CmBC_T, int, Sysparams, FluxContainer> LOP;
+  LOP lop(phiB_t, cpB_t, cmB_t, f, s, fluxContainer);
 
   
   
@@ -144,27 +127,34 @@ void stationary_pnp(Sysparams s, GV gv, std::vector<int> boundaryIndexToEntity, 
   slp.apply();
 
   // <<<7>>> graphical output
-//  typedef typename Dune::PDELab::GridFunctionSubSpace<GFS,0> PhiGFSS;
-  typedef PhiGFS PhiGFSS;
+  typedef typename Dune::PDELab::GridFunctionSubSpace<GFS,0> PhiGFSS;
   PhiGFSS phiGFSS(gfs);
-  typedef Dune::PDELab::VectorDiscreteGridFunction<PhiGFSS, U> PhiDGF;
+  typedef Dune::PDELab::DiscreteGridFunction<PhiGFSS, U> PhiDGF;
   PhiDGF phiDGF(phiGFSS, u);
+  typedef typename Dune::PDELab::GridFunctionSubSpace<GFS,1> CpGFSS;
+  CpGFSS cpGFSS(gfs);
+  typedef Dune::PDELab::DiscreteGridFunction<CpGFSS, U> CpDGF;
+  CpDGF cpDGF(cpGFSS, u);
+  typedef typename Dune::PDELab::GridFunctionSubSpace<GFS,2> CmGFSS;
+  CmGFSS cmGFSS(gfs);
+  typedef Dune::PDELab::DiscreteGridFunction<CmGFSS, U> CmDGF;
+  CmDGF cmDGF(cmGFSS, u);
 
   Dune::VTKWriter<GV> vtkwriter(gv,Dune::VTKOptions::conforming);
   vtkwriter.addVertexData(new Dune::PDELab::VTKGridFunctionAdapter<PhiDGF>(phiDGF,"Phi"));
+  vtkwriter.addVertexData(new Dune::PDELab::VTKGridFunctionAdapter<CpDGF>(cpDGF,"Cp"));
+  vtkwriter.addVertexData(new Dune::PDELab::VTKGridFunctionAdapter<CmDGF>(cmDGF,"Cm"));
   vtkwriter.write("solution",Dune::VTKOptions::binaryappended);
 
-  Dune::GnuplotWriter<GV> gnuplotwriter(gv);
-  gnuplotwriter.addVertexData(new Dune::PDELab::VTKGridFunctionAdapter<PhiDGF>,"solution");
-  gnuplotwriter.write("yeah.dat"); 
+//  Dune::GnuplotWriter<GV> gnuplotwriter(gv);
+//  gnuplotwriter.addVertexData(new Dune::PDELab::VTKGridFunctionAdapter<PhiDGF>,"solution");
+//  gnuplotwriter.write("yeah.dat"); 
   
-/*  int argc = 0;
-//  char**& argv = 0;
   
-  DataWriter<GV, double, 0> dw(gv, helper);
-  std::string s1("solution");
-  std::string s2("solution.dat");
-  dw.writeIpbsCellData(gfs, u, s1, s2); */
+//  DataWriter<GV, double, 0> dw(gv, helper);
+//  std::string s1("solution");
+//  std::string s2("solution.dat");
+//  dw.writeIpbsCellData(phiDGF, u, s1, s2); 
 
 }
 
