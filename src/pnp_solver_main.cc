@@ -57,6 +57,7 @@
 
 
 #include "stationary_diffusion.hh"
+#include "stationary_pnp.hh"
 
 
 PnpSolverMain::PnpSolverMain(Dune::MPIHelper &helper_) : helper(helper_) {
@@ -100,7 +101,7 @@ void PnpSolverMain::run(std::string configfile) {
 
   GV gv = grid->leafView();
 
-  stationary_diffusion<GV>(s, gv, boundaryIndexToEntity, elementIndexToEntity, helper);
+  stationary_pnp<GV>(s, gv, boundaryIndexToEntity, elementIndexToEntity, helper);
 
   /*
 
