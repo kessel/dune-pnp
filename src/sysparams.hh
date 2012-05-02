@@ -18,6 +18,7 @@ class Sysparams {
     int n_surfaces;
     double dt;
     double tend;
+    int verbosity;
 };
 
 class Surface {

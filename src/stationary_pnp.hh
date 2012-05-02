@@ -4,6 +4,7 @@
 #include <string>
 #include"pnp_operator.hh"
 #include<dune/pdelab/gridfunctionspace/gridfunctionspaceutilities.hh>
+#include<ionFlux.hh>
 
 
 template<class GV>
@@ -15,12 +16,13 @@ void stationary_pnp(Sysparams s, GV gv, std::vector<int> boundaryIndexToEntity, 
 
   const int dim = 2;
 
+  typedef std::vector<int> PG;
   
   typedef Dune::PDELab::ISTLVectorBackend<1> VectorBackend;
 
-  typedef Dune::PDELab::Pk2DLocalFiniteElementMap<GV, Coord,Real, 1> PhiFEM;
-  typedef Dune::PDELab::Pk2DLocalFiniteElementMap<GV, Coord,Real, 1> CpFEM;
-  typedef Dune::PDELab::Pk2DLocalFiniteElementMap<GV, Coord,Real, 1> CmFEM;
+  typedef Dune::PDELab::Pk2DLocalFiniteElementMap<GV, Coord,Real, 2> PhiFEM;
+  typedef Dune::PDELab::Pk2DLocalFiniteElementMap<GV, Coord,Real, 2> CpFEM;
+  typedef Dune::PDELab::Pk2DLocalFiniteElementMap<GV, Coord,Real, 2> CmFEM;
   PhiFEM phiFem(gv);
   CpFEM cpFEM(gv);
   CmFEM cmFEM(gv);
@@ -113,18 +115,40 @@ void stationary_pnp(Sysparams s, GV gv, std::vector<int> boundaryIndexToEntity, 
 
   
   
-  typedef Dune::PDELab::ISTLBCRSMatrixBackend<1,1> MBE;
-  typedef Dune::PDELab::GridOperatorSpace<GFS,GFS,LOP,CC,CC,MBE> GOS;
-  GOS gos(gfs,cc,gfs,cc,lop);
+//  typedef Dune::PDELab::ISTLBCRSMatrixBackend<1,1> MBE;
+//  typedef Dune::PDELab::GridOperatorSpace<GFS,GFS,LOP,CC,CC,MBE> GOS;
+//  GOS gos(gfs,cc,gfs,cc,lop);
+//
+//  // <<<5>>> Select a linear solver backend
+//  typedef Dune::PDELab::ISTLBackend_SEQ_BCGS_SSOR LS;
+//  LS ls(5000,true);
+//
+//  // <<<6>>> assemble and solve linear problem
+//  typedef Dune::PDELab::StationaryLinearProblemSolver<GOS,LS,U> SLP;
+//  SLP slp(gos,u,ls,1e-10);
+//  slp.apply();
 
-  // <<<5>>> Select a linear solver backend
-  typedef Dune::PDELab::ISTLBackend_SEQ_BCGS_SSOR LS;
-  LS ls(5000,true);
 
-  // <<<6>>> assemble and solve linear problem
-  typedef Dune::PDELab::StationaryLinearProblemSolver<GOS,LS,U> SLP;
-  SLP slp(gos,u,ls,1e-10);
-  slp.apply();
+      typedef Dune::PDELab::ISTLBCRSMatrixBackend<1,1> MBE;
+    typedef Dune::PDELab::GridOperatorSpace<GFS,GFS,LOP,CC,CC,MBE,true> GOS;
+    GOS gos(gfs,cc,gfs,cc,lop);
+
+    // <<<5a>>> Select a linear solver backend
+    typedef Dune::PDELab::ISTLBackend_NOVLP_BCGS_SSORk<GOS,double> LS;
+    LS ls(gfs);
+
+    // <<<5b>>> Solve nonlinear problem
+    typedef Dune::PDELab::Newton<GOS,LS,U> NEWTON;
+    NEWTON newton(gos,u,ls);
+    newton.setLineSearchStrategy(newton.hackbuschReuskenAcceptBest);
+    newton.setReassembleThreshold(0.0);
+    newton.setVerbosityLevel(s.verbosity);
+    newton.setReduction(1e-10);
+    newton.setMinLinearReduction(1e-8);
+    newton.setMaxIterations(50);
+    newton.setLineSearchMaxIterations(25);
+    newton.apply();
+
 
   // <<<7>>> graphical output
   typedef typename Dune::PDELab::GridFunctionSubSpace<GFS,0> PhiGFSS;
@@ -149,12 +173,53 @@ void stationary_pnp(Sysparams s, GV gv, std::vector<int> boundaryIndexToEntity, 
 //  Dune::GnuplotWriter<GV> gnuplotwriter(gv);
 //  gnuplotwriter.addVertexData(new Dune::PDELab::VTKGridFunctionAdapter<PhiDGF>,"solution");
 //  gnuplotwriter.write("yeah.dat"); 
+
+  typename GFS::LocalFunctionSpace lfs(gfs);
   
   
-//  DataWriter<GV, double, 0> dw(gv, helper);
-//  std::string s1("solution");
-//  std::string s2("solution.dat");
-//  dw.writeIpbsCellData(phiDGF, u, s1, s2); 
+  DataWriter<GV, double, 0> dw(gv, helper);
+  std::string s1("solution");
+  std::string s2("solution.dat");
+  dw.writePNPCellData(gfs, u, s1, s2); 
+
+ 
+
+  typedef typename Dune::PDELab::DiscreteGridFunctionGradient < PhiGFSS, U>::Traits::RangeType I;
+  std::vector<I> ip;
+  std::vector<I> im;
+  I temp2(0);
+  for (unsigned int i = 0; i<s.n_surfaces; i++) {
+    ip.push_back(temp2);
+    im.push_back(temp2);
+  }
+
+
+//    typedef typename GV::template Codim<0>::template Partition
+//       <Dune::Interior_Partition>::Iterator LeafIterator;
+//
+//
+//
+//
+//    for (LeafIterator it = 
+//            gv.template begin<0,Dune::Interior_Partition>();
+//            it!=gv.template end<0,Dune::Interior_Partition>(); ++it) {
+//
+//    std::cout << "yeah" << std::endl;
+//    for (typename GV::IntersectionIterator ii = gv.ibegin(*it); ii!=gv.ibegin(*it); ++ii) {
+//      std::cout << "intersectino" << std::endl;
+//      if (ii->boundary()) {
+//        std::cout << "boundary" << std::endl;
+//      }
+//    }
+//    }
+ 
+
+  std::cout << "------- ION CURRENTS --------" << std::endl;
+  calcIonFlux<GV, GFS, U, PG, std::vector<I> >(gv, gfs, u, boundaryIndexToEntity, ip, im);
+  for (unsigned int i = 0; i<s.n_surfaces; i++) {
+    std::cout << i << " " << ip[i] << " " << im[i] << std::endl;
+  }
+  
 
 }
 

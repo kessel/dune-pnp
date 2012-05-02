@@ -70,7 +70,7 @@ void PnpSolverMain::run(std::string configfile) {
   std::cout << "I want to solve!!" << std::endl;
 
   Sysparams s;
-  s.readConfigFile("config.cfg");
+  s.readConfigFile(configfile);
 
   std::string meshfile = s.meshfile;
 
@@ -87,7 +87,7 @@ void PnpSolverMain::run(std::string configfile) {
 
     // read a gmsh file
   Dune::GmshReader<GridType> gmshreader;
-  gmshreader.read(factory, "mesh.msh", boundaryIndexToEntity, elementIndexToEntity, true, true);
+  gmshreader.read(factory, s.meshfile, boundaryIndexToEntity, elementIndexToEntity, true, true);
 
 
   // Here go the main settings what we want to use:

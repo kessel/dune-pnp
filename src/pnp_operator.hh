@@ -15,6 +15,10 @@
  *
  * \tparam B a function indicating the type of boundary condition
  */
+
+
+#define PI 3.1415
+
 template<class PhiB, class CpB, class CmB, class F, class S, class FluxContainer>
 class PnpOperator : 
   public Dune::PDELab::NumericalJacobianApplyVolume<PnpOperator<PhiB, CpB, CmB, F, S, FluxContainer> >,
@@ -159,19 +163,24 @@ public:
         ////////////////////////// Weak Formulation /////////////////////////////////////////////
         // integrate grad u * grad phi_i + a*u*phi_i - f phi_i
         for (size_type i=0; i<lfsu_phi.size(); i++)
-          r[lfsu_phi.localIndex(i)] += ( gradu_phi*gradphi_phi[i] + a*u_phi*phi_phi[i] - F*phi_phi[i] )*factor; 
+          r[lfsu_phi.localIndex(i)] += ( gradu_phi*gradphi_phi[i] 
+                                       + 4*PI*(u_cp - u_cm)*phi_phi[i] 
+                                       )*factor; 
 
         ////////////////////////// NOW CP /////////////////////////////////////////////
         
         // integrate grad u * grad cp_i + a*u*cp_i - f cp_i
         for (size_type i=0; i<lfsu_cp.size(); i++)
-          r[lfsu_cp.localIndex(i)] += ( gradu_cp*gradphi_cp[i] + a*u_cp*phi_cp[i] - F*phi_cp[i] )*factor; 
+          r[lfsu_cp.localIndex(i)] += ( gradu_cp*gradphi_cp[i] 
+                                        - u_cp*(gradu_phi*gradphi_cp[i])
+                                        )*factor; 
 
         ///////////////////////// Finally CM ////////////////////////////////////////
 
         // integrate grad u * grad cm_i + a*u*cm_i - f cm_i
         for (size_type i=0; i<lfsu_cm.size(); i++)
-          r[lfsu_cm.localIndex(i)] += ( gradu_cm*gradphi_cm[i] + a*u_cm*phi_cm[i] - F*phi_cm[i] )*factor; 
+          r[lfsu_cm.localIndex(i)] += ( gradu_cm*gradphi_cm[i] 
+                                        + u_cm*(gradu_phi*gradphi_cm[i]) )*factor; 
       }
   }
 

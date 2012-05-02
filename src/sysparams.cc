@@ -32,6 +32,8 @@ void Sysparams::readConfigFile(std::string config_file) {
 
   // Create particles
   n_surfaces = configuration.get<int>("system.n_surfaces");
+
+  verbosity=configuration.get<int>("system.verbosity");
   
   Surface temp;
   for (int i = 0; i < n_surfaces; i++)

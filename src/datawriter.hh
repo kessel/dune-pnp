@@ -38,8 +38,8 @@ class DataWriter {
         \param filename Filename for the output (*.dat)
     */
 
-    template <class GFS, class DataContainer>
-    void writeIpbsCellData(const GFS& gfs, const DataContainer& data, 
+    template <class GFS, class U>
+    void writePNPCellData(GFS& gfs, const U& u, 
             const std::string& name, const std::string &filename)
       {
         std::string myFilename = filename_helper(filename);
@@ -55,34 +55,149 @@ class DataWriter {
 
         typedef typename GridView::template Codim<codim>::template Partition
             <Dune::Interior_Partition>::Iterator LeafIterator;
-    
-        // do output
+
+//    typedef typename LFSU::template Child<0>::Type LFSU_Phi;
+//    typedef typename LFSU::template Child<1>::Type LFSU_Cp;
+//    typedef typename LFSU::template Child<2>::Type LFSU_Cm;
+//    LFSU_Phi& lfsu_phi(lfsu_s.template getChild<0>());
+//    LFSU_Cp&  lfsu_cp(lfsu_s.template getChild<1>());
+//    LFSU_Cm&  lfsu_cm(lfsu_s.template getChild<2>());
+//
+//
+//    // some types
+//    typedef typename LFSU_Phi::Traits::FiniteElementType::
+//      Traits::LocalBasisType::Traits::DomainFieldType DF;
+//
+//    typedef typename LFSU_Phi::Traits::FiniteElementType::
+//      Traits::LocalBasisType::Traits::RangeFieldType RF;
+//
+//    typedef typename LFSU_Phi::Traits::FiniteElementType::
+//      Traits::LocalBasisType::Traits::RangeType RangeType;
+//
+//    typedef typename LFSU_Phi::Traits::SizeType size_type;
+//
+//    typedef typename LFSU_Phi::Traits::FiniteElementType::
+//      Traits::LocalBasisType::Traits::JacobianType JacobianTypePhi;
+//    typedef typename LFSU_Cp::Traits::FiniteElementType::
+//      Traits::LocalBasisType::Traits::JacobianType JacobianTypeCp;
+//    typedef typename LFSU_Cm::Traits::FiniteElementType::
+//      Traits::LocalBasisType::Traits::JacobianType JacobianTypeCm;
+//  
+//        
+//    // dimensions
+//    const int dim = GridView::dimension;
+//    const int dimw = GridView::dimensionworld;
+//
+//    // select quadrature rule
+//
+//    // loop over quadrature points
         for (LeafIterator it = 
             gv.template begin<codim,Dune::Interior_Partition>();
             it!=gv.template end<codim,Dune::Interior_Partition>(); ++it)
-        {
+      {
+//    lfsu_phi.bind(*it);
+//    lfsu_cp.bind(*it);
+//    lfsu_cm.bind(*it);
+//           Dune::FieldVector<Real, dim> local = 
+//              it->geometry().local(it->geometry().center());
+//
+//        // Commons:
+//        
+//        // transform gradients from reference element to real element
+//        const Dune::FieldMatrix<DF,dimw,dim> 
+//          jac = it->geometry().jacobianInverseTransposed(local);
+//        
+//
+//        Dune::FieldVector<RF,dim> 
+//          globalpos = it->geometry().global(local);
+//        RF F = 0; 
+//        RF a = 0; 
+////        RF factor = it->weight()*it->geometry().integrationElement(local);
+//
+//        // evaluate basis functions on reference element
+//        std::vector<RangeType> phi_phi(lfsu_phi.size());
+//        lfsu_phi.finiteElement().localBasis().evaluateFunction(local,phi_phi);
+//        std::vector<RangeType> phi_cp(lfsu_cp.size());
+//        lfsu_cp.finiteElement().localBasis().evaluateFunction(local,phi_cp);
+//        std::vector<RangeType> phi_cm(lfsu_cm.size());
+//        lfsu_cm.finiteElement().localBasis().evaluateFunction(local,phi_cm);
+//
+//        // compute u at integration point
+//        RF u_phi=0.0;
+//        for (size_type i=0; i<lfsu_phi.size(); i++)
+//          u_phi += x[lfsu_phi.localIndex(i)]*phi_phi[i];
+//        RF u_cp=0.0;
+//        for (size_type i=0; i<lfsu_cp.size(); i++)
+//          u_cp += x[lfsu_cp.localIndex(i)]*phi_cp[i];
+//        RF u_cm=0.0;
+//        for (size_type i=0; i<lfsu_cm.size(); i++)
+//          u_cm += x[lfsu_cm.localIndex(i)]*phi_cm[i];
+
+        // transform gradients from reference element to real element
+//        std::vector<Dune::FieldVector<RF,dim> > gradphi_phi(lfsu_phi.size());
+//        for (size_type i=0; i<lfsu_phi.size(); i++)
+//          jac.mv(js_phi[i][0],gradphi_phi[i]);
+//        std::vector<Dune::FieldVector<RF,dim> > gradphi_cp(lfsu_cp.size());
+//        for (size_type i=0; i<lfsu_cp.size(); i++)
+//          jac.mv(js_cp[i][0],gradphi_cp[i]);
+//        std::vector<Dune::FieldVector<RF,dim> > gradphi_cm(lfsu_cm.size());
+//        for (size_type i=0; i<lfsu_cm.size(); i++)
+//          jac.mv(js_cm[i][0],gradphi_cm[i]);
+//
+//        // compute gradient of u
+//        Dune::FieldVector<RF,dim> gradu_phi(0.0);
+//        for (size_type i=0; i<lfsu_phi.size(); i++)
+//          gradu_phi.axpy(x[lfsu_phi.localIndex(i)],gradphi_phi[i]);
+//        Dune::FieldVector<RF,dim> gradu_cp(0.0);
+//        for (size_type i=0; i<lfsu_cp.size(); i++)
+//          gradu_cp.axpy(x[lfsu_cp.localIndex(i)],gradphi_cp[i]);
+//        Dune::FieldVector<RF,dim> gradu_cm(0.0);
+//        for (size_type i=0; i<lfsu_cm.size(); i++)
+//          gradu_cm.axpy(x[lfsu_cm.localIndex(i)],gradphi_cm[i]);
+
+ 
+    
+//        // do output
             Dune::FieldVector<Real, dim> evalPos = 
               it->geometry().center();
             Dune::FieldVector<Real, dim> local = 
               it->geometry().local(evalPos);
-            // construct a discrete grid function for access to solution
-            typedef Dune::PDELab::DiscreteGridFunction
-              <GFS,DataContainer> DGF;
-            const DGF udgf(gfs, data);
-            typedef typename DGF::Traits::RangeType RT;
-            RT value;
-            // evaluate the potential
-            udgf.evaluate(*it, local, value);
-            Dune::FieldVector<Real,dim> gradphi;
-            typename Dune::PDELab::DiscreteGridFunctionGradient
-              < GFS, DataContainer > grads(gfs,data);
-            grads.evaluate(*it, local, gradphi);
 
-            out << std::left << std::scientific << evalPos << "\t";
-            out << std::left << value << "\t";
-            out << std::left << gradphi << "\t";
-            out << std::left << gradphi.two_norm() 
-                  << "\n";
+  typedef typename Dune::PDELab::GridFunctionSubSpace<GFS,0> PhiGFSS;
+  PhiGFSS phiGFSS(gfs);
+  typedef Dune::PDELab::DiscreteGridFunction<PhiGFSS, U> PhiDGF;
+  PhiDGF phiDGF(phiGFSS, u);
+  typedef typename Dune::PDELab::GridFunctionSubSpace<GFS,1> CpGFSS;
+  CpGFSS cpGFSS(gfs);
+  typedef Dune::PDELab::DiscreteGridFunction<CpGFSS, U> CpDGF;
+  CpDGF cpDGF(cpGFSS, u);
+  typedef typename Dune::PDELab::GridFunctionSubSpace<GFS,2> CmGFSS;
+  CmGFSS cmGFSS(gfs);
+  typedef Dune::PDELab::DiscreteGridFunction<CmGFSS, U> CmDGF;
+  CmDGF cmDGF(cmGFSS, u);
+
+            typedef typename PhiDGF::Traits::RangeType phiRT;
+            phiRT phi;
+            phiDGF.evaluate(*it, local, phi);
+            typedef typename PhiDGF::Traits::RangeType cpRT;
+            phiRT cp;
+            cpDGF.evaluate(*it, local, cp);
+            typedef typename PhiDGF::Traits::RangeType cmRT;
+            phiRT cm;
+            cmDGF.evaluate(*it, local, cm);
+
+
+//            Dune::FieldVector<Real,dim> gradphi;
+//            typename Dune::PDELab::DiscreteGridFunctionGradient
+//              < GFS, DataContainer > grads(gfs,data);
+//            grads.evaluate(*it, local, gradphi);
+
+            out << std::left << std::scientific << it->geometry().center() << " "
+              << phi << " " << cp << " " << cm << std::endl;
+//            out << std::left << u_phi << "\t";
+//            out << std::left << u_cp << "\t";
+//            out << std::left << u_cm 
+//                  << "\n";
         }
         
         out.close();

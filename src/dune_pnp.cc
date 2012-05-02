@@ -18,9 +18,14 @@ int main(int argc, char** argv)
       std::cout<<"I am rank "<<helper.rank()<<" of "<<helper.size()
         <<" processes!"<<std::endl;
 
-    std::string f("hallo");
+    std::stringstream f;
+    
+    if (argc != 2) {
+      std::cout << "Please pass config file.\n";
+    }
+    f << argv[1];
     PnpSolverMain p(helper);
-    p.run(f);
+    p.run(f.str());
 
 
     return 0;
