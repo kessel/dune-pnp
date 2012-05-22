@@ -11,10 +11,34 @@ public :
 
   typedef Dune::PDELab::GridFunctionTraits<GV,RF,1,Dune::FieldVector<RF,1> > Traits;
   typedef typename GV::IntersectionIterator IntersectionIterator;
+  typedef typename GV::ctype ctype;
 
   //! construct from grid view
   BCExtension(const GV& gv_, const PGMap& pg_, const S& s_) : gv(gv_), pg(pg_), s(s_) {
     t = 0;
+  }
+
+  const inline bool global_on_intersection(Dune::FieldVector<ctype, GV::dimensionworld> integrationPointGlobal, IntersectionIterator& ii ) const 
+  {
+    ctype dist;
+    ctype this_dist;
+
+
+    if (GV::dimensionworld == 2) {
+      Dune::FieldVector<ctype,GV::dimensionworld> p_vec = ii->geometry().corner(1) - ii->geometry().corner(0);
+      p_vec/=p_vec.two_norm();
+      Dune::FieldVector<ctype,GV::dimensionworld> p2 = p_vec;
+      p2 *= ((integrationPointGlobal - ii->geometry().corner(0))*p_vec);
+      Dune::FieldVector<ctype,GV::dimensionworld> dist_vec = p2 - (integrationPointGlobal - ii->geometry().corner(0));
+
+      if (dist_vec.two_norm() < 1e-9)
+        return true;
+      return false;
+    } else {
+//      std::cout << "implement me in " << __FILE__ << __LINE__ << std:endl;
+//      DUNE_THROW("Not implemented!");
+    }
+
   }
 
   //! evaluate extended function on element
@@ -24,60 +48,27 @@ public :
   {
     //! Set value for potential at outer domain boundaries
     //
-    typedef typename GV::ctype ctype;
-    const int dim=GV::dimensionworld;
 
-    Dune::FieldVector<ctype,dim> integrationPointGlobal =  e.geometry().global(xlocal);
+    Dune::FieldVector<ctype,GV::dimensionworld> integrationPointGlobal =  e.geometry().global(xlocal);
     int counter = 0;
-    ctype dist;
-    ctype this_dist;
     int physgroup_index = -1;
-    Dune::FieldVector<ctype,dim> xglobal;
-    Dune::FieldVector<ctype,dim> dist_vec;
     for (IntersectionIterator ii = gv.ibegin(e); ii != gv.iend(e) ; ++ii) {
+
       if (ii->boundary()) {
-      xglobal = ii->geometry().center();
-      dist_vec = xglobal - integrationPointGlobal;
-      dist=dist_vec * dist_vec;
-      if (dist < 1e-3) 
-        physgroup_index = pg[ii->boundarySegmentIndex()];
-      xglobal = ii->geometry().corner(0);
-      dist_vec = xglobal - integrationPointGlobal;
-      dist=dist_vec * dist_vec;
-      if (dist < 1e-3) 
-        physgroup_index = pg[ii->boundarySegmentIndex()];
-      xglobal = ii->geometry().corner(1);
-      dist_vec = xglobal - integrationPointGlobal;
-      dist=dist_vec * dist_vec;
-      if (dist < 1e-3) 
-        physgroup_index = pg[ii->boundarySegmentIndex()];
+        if (global_on_intersection(integrationPointGlobal, ii)) {
+          physgroup_index = pg[ii->boundarySegmentIndex()];
+        }
       } else {
-
-
-      typename GV::Traits::Grid::template Codim<0>::EntityPointer o( ii->outside() );
-      counter++;
-      for  (IntersectionIterator ii2 = gv.ibegin(*o); ii2 != gv.iend(*o) ; ++ii2) {
-        if (ii2->boundary()) {
-      xglobal = ii2->geometry().center();
-      dist_vec = xglobal - integrationPointGlobal;
-      dist=dist_vec * dist_vec;
-      if (dist < 1e-3) 
-        physgroup_index = pg[ii2->boundarySegmentIndex()];
-      xglobal = ii2->geometry().corner(0);
-      dist_vec = xglobal - integrationPointGlobal;
-      dist=dist_vec * dist_vec;
-      if (dist < 1e-3) 
-        physgroup_index = pg[ii2->boundarySegmentIndex()];
-      xglobal = ii2->geometry().corner(1);
-      dist_vec = xglobal - integrationPointGlobal;
-      dist=dist_vec * dist_vec;
-      if (dist < 1e-3) 
-        physgroup_index = pg[ii2->boundarySegmentIndex()];
+        typename GV::Traits::Grid::template Codim<0>::EntityPointer o( ii->outside() );
+        for  (IntersectionIterator ii2 = gv.ibegin(*o); ii2 != gv.iend(*o) ; ++ii2) {
+          if (ii2->boundary()) {
+            if (global_on_intersection(integrationPointGlobal, ii2)) {
+              physgroup_index = pg[ii2->boundarySegmentIndex()];
+            }
+          }
         }
       }
-      }
-
-      }
+    }
     if (physgroup_index >= 0) {
         switch (component){
           case 0:
