@@ -40,6 +40,18 @@ public :
     }
 
   }
+  const inline int bctype(int physgroup_index) const {
+    int bctype;
+    switch (component){
+    case 0:
+      bctype=s.surfaces[physgroup_index].coulombBtype;
+    case 1:
+      bctype=s.surfaces[physgroup_index].plusDiffusionBtype;
+    case 2:
+      bctype=s.surfaces[physgroup_index].minusDiffusionBtype;;
+    }
+    return bctype;
+  }
 
   //! evaluate extended function on element
   inline void evaluate (const typename Traits::ElementType& e,
@@ -53,17 +65,32 @@ public :
     int counter = 0;
     int physgroup_index = -1;
     for (IntersectionIterator ii = gv.ibegin(e); ii != gv.iend(e) ; ++ii) {
-
       if (ii->boundary()) {
         if (global_on_intersection(integrationPointGlobal, ii)) {
-          physgroup_index = pg[ii->boundarySegmentIndex()];
+          if (physgroup_index==-1 || bctype(physgroup_index) != 0) {
+            physgroup_index = pg[ii->boundarySegmentIndex()];
+          }
         }
       } else {
         typename GV::Traits::Grid::template Codim<0>::EntityPointer o( ii->outside() );
         for  (IntersectionIterator ii2 = gv.ibegin(*o); ii2 != gv.iend(*o) ; ++ii2) {
           if (ii2->boundary()) {
             if (global_on_intersection(integrationPointGlobal, ii2)) {
-              physgroup_index = pg[ii2->boundarySegmentIndex()];
+              if (physgroup_index==-1 || bctype(physgroup_index) != 0) {
+                physgroup_index = pg[ii2->boundarySegmentIndex()];
+              } else {
+                int bctype;
+                switch (component){
+                  case 0:
+                    bctype=s.surfaces[physgroup_index].coulombBtype;
+                  case 1:
+                    bctype=s.surfaces[physgroup_index].plusDiffusionBtype;
+                  case 2:
+                    bctype=s.surfaces[physgroup_index].minusDiffusionBtype;;
+                }
+                if (bctype != 0)
+                  physgroup_index = pg[ii2->boundarySegmentIndex()];
+              }
             }
           }
         }

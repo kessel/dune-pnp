@@ -111,7 +111,7 @@ public:
         RF a = 0; 
         RF factor = it->weight()*eg.geometry().integrationElement(it->position());
         if (s.cylindrical) 
-            factor *= globalpos[0];
+            factor *= globalpos[1];
 
         // evaluate basis functions on reference element
         std::vector<RangeType> phi_phi(lfsu_phi.size());
@@ -254,7 +254,7 @@ public:
         Dune::FieldVector<DF,dim> global = ig.geometryInInside().global(it->position());
         RF factor = it->weight()*ig.geometry().integrationElement(it->position());
         if (s.cylindrical) 
-            factor *= global[0];
+            factor *= global[1];
         RF j;
 
         // evaluate basis functions on reference element
