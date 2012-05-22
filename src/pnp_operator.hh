@@ -110,6 +110,8 @@ public:
         RF F = 0; 
         RF a = 0; 
         RF factor = it->weight()*eg.geometry().integrationElement(it->position());
+        if (s.cylindrical) 
+            factor *= globalpos[0];
 
         // evaluate basis functions on reference element
         std::vector<RangeType> phi_phi(lfsu_phi.size());
@@ -249,9 +251,11 @@ public:
           
         // position of quadrature point in local coordinates of element 
         Dune::FieldVector<DF,dim> local = ig.geometryInInside().global(it->position());
+        Dune::FieldVector<DF,dim> global = ig.geometryInInside().global(it->position());
         RF factor = it->weight()*ig.geometry().integrationElement(it->position());
+        if (s.cylindrical) 
+            factor *= global[0];
         RF j;
-
 
         // evaluate basis functions on reference element
         std::vector<RangeType> phi_phi(lfsu_phi.size());
