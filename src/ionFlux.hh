@@ -65,18 +65,22 @@ void calcIonFlux(const GV& gv, const GFS& gfs, const U& u, const PG& pg, C& ip, 
 
 
             Real factor = ii->geometry().volume();
-  //          gradCp *= -factor;
-  //          gradCm *= -factor;
-  //          gradphi *= factor;
+//            gradCp *= -factor;
+//            gradCm *= -factor;
+//            gradphi *= factor;
 
 //            gradphi*=-cp;
 
       if (ii->boundary()) {
             int physgroup_index = pg[ii->boundarySegmentIndex()]; 
             ip[physgroup_index] += ( gradCp - gradphi );
-//            gradphi*=cm/cp;
+            std::cout  << it->geometry().global(local)  << " "
+              << phi << " " << cp << " " << cm << " " << gradphi << " " << gradCp << " " << gradCm << " flux" << std::endl;
+
+            gradphi*=cm/cp;
             im[physgroup_index] += ( gradCm + gradphi );
-            std::cout << "flux " << " " << ( gradCp ) * ii->outerNormal(ii->geometry().local(evalPos)) << " " << ( gradCm ) * ii->outerNormal(ii->geometry().local(evalPos))  << " " <<  ( gradphi ) * ii->outerNormal(ii->geometry().local(evalPos)) << " " << cp << " " << cm << " " << physgroup_index << std::endl;
+ //           std::cout << "flux " << it->geometry().global(local) << " " << ( gradCp ) * ii->outerNormal(ii->geometry().local(evalPos)) << " " << ( gradCm ) * ii->outerNormal(ii->geometry().local(evalPos))  << " " <<  ( gradphi ) * ii->outerNormal(ii->geometry().local(evalPos)) << " " << cp << " " << cm << " " << physgroup_index << std::endl;
+
 
 //            im[physgroup_index] += ( -1* gradCm + cm*gradphi )*factor;
       }

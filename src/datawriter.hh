@@ -56,6 +56,40 @@ class DataWriter {
         typedef typename GridView::template Codim<codim>::template Partition
             <Dune::Interior_Partition>::Iterator LeafIterator;
 
+
+          typedef typename Dune::PDELab::GridFunctionSubSpace<GFS,0> PhiGFSS;
+  PhiGFSS phiGFSS(gfs);
+  typedef Dune::PDELab::DiscreteGridFunction<PhiGFSS, U> PhiDGF;
+  PhiDGF phiDGF(phiGFSS, u);
+  typename Dune::PDELab::DiscreteGridFunctionGradient < PhiGFSS, U> gradPhiF(phiGFSS,u);
+
+  typedef typename Dune::PDELab::GridFunctionSubSpace<GFS,1> CpGFSS;
+  CpGFSS cpGFSS(gfs);
+  typedef Dune::PDELab::DiscreteGridFunction<CpGFSS, U> CpDGF;
+  CpDGF cpDGF(cpGFSS, u);
+  typename Dune::PDELab::DiscreteGridFunctionGradient < CpGFSS, U> gradCpF(cpGFSS,u);
+  
+  typedef typename Dune::PDELab::GridFunctionSubSpace<GFS,2> CmGFSS;
+  CmGFSS cmGFSS(gfs);
+  typedef Dune::PDELab::DiscreteGridFunction<CmGFSS, U> CmDGF;
+  CmDGF cmDGF(cmGFSS, u);
+  typename Dune::PDELab::DiscreteGridFunctionGradient < CmGFSS, U> gradCmF(cmGFSS,u);
+
+  
+  typedef typename PhiDGF::Traits::RangeType phiRT;
+  phiRT phi;
+  typedef typename PhiDGF::Traits::RangeType cpRT;
+  phiRT cp;
+  typedef typename PhiDGF::Traits::RangeType cmRT;
+  phiRT cm;
+
+
+//  Dune::FieldVector<typename PhiDGF::Traits::RangeType,dim> gradphi;
+  typename Dune::PDELab::DiscreteGridFunctionGradient < PhiGFSS, U>::Traits::RangeType gradphi;
+  typename Dune::PDELab::DiscreteGridFunctionGradient < CpGFSS, U>::Traits::RangeType gradCp;
+  typename Dune::PDELab::DiscreteGridFunctionGradient < CmGFSS, U>::Traits::RangeType gradCm;
+ 
+
 //    typedef typename LFSU::template Child<0>::Type LFSU_Phi;
 //    typedef typename LFSU::template Child<1>::Type LFSU_Cp;
 //    typedef typename LFSU::template Child<2>::Type LFSU_Cm;
@@ -163,28 +197,15 @@ class DataWriter {
             Dune::FieldVector<Real, dim> local = 
               it->geometry().local(evalPos);
 
-  typedef typename Dune::PDELab::GridFunctionSubSpace<GFS,0> PhiGFSS;
-  PhiGFSS phiGFSS(gfs);
-  typedef Dune::PDELab::DiscreteGridFunction<PhiGFSS, U> PhiDGF;
-  PhiDGF phiDGF(phiGFSS, u);
-  typedef typename Dune::PDELab::GridFunctionSubSpace<GFS,1> CpGFSS;
-  CpGFSS cpGFSS(gfs);
-  typedef Dune::PDELab::DiscreteGridFunction<CpGFSS, U> CpDGF;
-  CpDGF cpDGF(cpGFSS, u);
-  typedef typename Dune::PDELab::GridFunctionSubSpace<GFS,2> CmGFSS;
-  CmGFSS cmGFSS(gfs);
-  typedef Dune::PDELab::DiscreteGridFunction<CmGFSS, U> CmDGF;
-  CmDGF cmDGF(cmGFSS, u);
-
-            typedef typename PhiDGF::Traits::RangeType phiRT;
-            phiRT phi;
             phiDGF.evaluate(*it, local, phi);
-            typedef typename PhiDGF::Traits::RangeType cpRT;
-            phiRT cp;
             cpDGF.evaluate(*it, local, cp);
-            typedef typename PhiDGF::Traits::RangeType cmRT;
-            phiRT cm;
             cmDGF.evaluate(*it, local, cm);
+
+            gradPhiF.evaluate(*it, local, gradphi);
+            gradCpF.evaluate(*it, local, gradCp);
+            gradCmF.evaluate(*it, local, gradCm);
+
+
 
 
 //            Dune::FieldVector<Real,dim> gradphi;
@@ -193,7 +214,7 @@ class DataWriter {
 //            grads.evaluate(*it, local, gradphi);
 
             out << std::left << std::scientific << it->geometry().center() << " "
-              << phi << " " << cp << " " << cm << std::endl;
+              << phi << " " << cp << " " << cm << " " << gradphi << " " << gradCp << " " << gradCm <<std::endl;
 //            out << std::left << u_phi << "\t";
 //            out << std::left << u_cp << "\t";
 //            out << std::left << u_cm 

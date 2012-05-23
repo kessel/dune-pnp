@@ -20,9 +20,9 @@ void stationary_pnp(Sysparams s, GV gv, std::vector<int> boundaryIndexToEntity, 
   
   typedef Dune::PDELab::ISTLVectorBackend<1> VectorBackend;
 
-  typedef Dune::PDELab::Pk2DLocalFiniteElementMap<GV, Coord,Real, 2> PhiFEM;
-  typedef Dune::PDELab::Pk2DLocalFiniteElementMap<GV, Coord,Real, 2> CpFEM;
-  typedef Dune::PDELab::Pk2DLocalFiniteElementMap<GV, Coord,Real, 2> CmFEM;
+  typedef Dune::PDELab::Pk2DLocalFiniteElementMap<GV, Coord,Real, 3> PhiFEM;
+  typedef Dune::PDELab::Pk2DLocalFiniteElementMap<GV, Coord,Real, 3> CpFEM;
+  typedef Dune::PDELab::Pk2DLocalFiniteElementMap<GV, Coord,Real, 3> CmFEM;
   PhiFEM phiFem(gv);
   CpFEM cpFEM(gv);
   CmFEM cmFEM(gv);
@@ -143,7 +143,7 @@ void stationary_pnp(Sysparams s, GV gv, std::vector<int> boundaryIndexToEntity, 
     newton.setLineSearchStrategy(newton.hackbuschReuskenAcceptBest);
     newton.setReassembleThreshold(0.0);
     newton.setVerbosityLevel(s.verbosity);
-    newton.setReduction(1e-10);
+    newton.setReduction(1e-15);
     newton.setMinLinearReduction(1e-8);
     newton.setMaxIterations(50);
     newton.setLineSearchMaxIterations(25);
