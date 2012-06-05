@@ -31,7 +31,7 @@
 #include<dune/pdelab/gridfunctionspace/gridfunctionspaceutilities.hh>
 #include<dune/pdelab/gridfunctionspace/genericdatahandle.hh>
 #include<dune/pdelab/gridfunctionspace/interpolate.hh>
-#include<dune/pdelab/gridfunctionspace/constraints.hh>
+#include<dune/pdelab/constraints/constraints.hh>
 #include<dune/pdelab/gridoperator/gridoperator.hh>
 #include<dune/pdelab/backend/istlvectorbackend.hh>
 #include<dune/pdelab/backend/istlmatrixbackend.hh>
@@ -73,9 +73,6 @@ void PnpSolverMain::run(std::string configfile) {
 
   std::string meshfile = s.meshfile;
 
-  double dt = s.dt;
-  double tend = s.tend;
-
   std::vector<int> boundaryIndexToEntity;
   std::vector<int> elementIndexToEntity;
 
@@ -92,15 +89,9 @@ void PnpSolverMain::run(std::string configfile) {
     gmshreader.read(factory, s.meshfile, boundaryIndexToEntity, elementIndexToEntity, true, true);
   }
 
-
-    // read a gmsh file
-
   Dune::CollectiveCommunication<Dune::MPIHelper::MPICommunicator> colCom(helper.getCommunicator());
 
-  // Here go the main settings what we want to use:
-  const int dim=2;
-
-    // Communicate boundary vector
+  // Communicate boundary vector
   int size = boundaryIndexToEntity.size();
   colCom.broadcast (&size, 1, 0);
   if (helper.rank() > 0)

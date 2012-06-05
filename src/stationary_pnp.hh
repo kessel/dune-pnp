@@ -92,8 +92,6 @@ void stationary_pnp(Sysparams s, GV gv, std::vector<int> boundaryIndexToEntity, 
   typedef typename GV::Grid GridType;
   typedef double Real;
 
-  const int dim = 2;
-
   typedef std::vector<int> PG;
   
   typedef Dune::PDELab::ISTLVectorBackend<1> VectorBackend;
@@ -308,7 +306,7 @@ void stationary_pnp(Sysparams s, GV gv, std::vector<int> boundaryIndexToEntity, 
   std::vector<I> ip;
   std::vector<I> im;
   I temp2(0);
-  for (unsigned int i = 0; i<s.n_surfaces; i++) {
+  for (int i = 0; i<s.n_surfaces; i++) {
     ip.push_back(temp2);
     im.push_back(temp2);
   }

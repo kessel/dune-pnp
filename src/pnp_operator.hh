@@ -1,5 +1,5 @@
-#include<dune/grid/common/genericreferenceelements.hh>
-#include<dune/grid/common/quadraturerules.hh>
+#include <dune/geometry/referenceelements.hh>
+#include <dune/geometry/quadraturerules.hh>
 #include<dune/pdelab/common/geometrywrapper.hh>
 #include<dune/pdelab/localoperator/defaultimp.hh>
 #include<dune/pdelab/localoperator/pattern.hh>
@@ -37,7 +37,8 @@ public:
   enum { doAlphaBoundary = true };                                // assemble boundary
   
   PnpOperator (const PhiB& phiB_, const CpB& cpB_, const CmB& cmB_, const F& f_, S& s_, FluxContainer fluxContainer_, unsigned int intorder_=2)  // needs boundary cond. type
-    : phiB(phiB_), cpB(cpB_), cmB(cmB_),  f(f_), intorder(intorder_), s(s_), fluxContainer(fluxContainer_)
+    : phiB(phiB_), cpB(cpB_), cmB(cmB_),  f(f_), s(s_),
+      fluxContainer(fluxContainer_), intorder(intorder_)
   {}
 
   // volume integral depending on test and ansatz functions
@@ -58,9 +59,9 @@ public:
     typedef typename LFSV::template Child<0>::Type LFSV_Phi;
     typedef typename LFSV::template Child<1>::Type LFSV_Cp;
     typedef typename LFSV::template Child<2>::Type LFSV_Cm;
-    const LFSV_Phi& lfsv_phi = lfsv_s.template getChild<0>();
-    const LFSV_Cp&  lfsv_cp = lfsv_s.template getChild<1>();
-    const LFSV_Cm&  lfsv_cm = lfsv_s.template getChild<2>();
+    //const LFSV_Phi& lfsv_phi = lfsv_s.template getChild<0>();
+    //const LFSV_Cp&  lfsv_cp = lfsv_s.template getChild<1>();
+    //const LFSV_Cm&  lfsv_cm = lfsv_s.template getChild<2>();
     
     // some types
     typedef typename LFSV_Phi::Traits::FiniteElementType::
@@ -97,8 +98,6 @@ public:
     for (typename Dune::QuadratureRule<DF,dim>::const_iterator 
            it=rule.begin(); it!=rule.end(); ++it)
       {
-
-        // Commons:
         
         // transform gradients from reference element to real element
         const Dune::FieldMatrix<DF,dimw,dim> 
@@ -107,8 +106,6 @@ public:
 
         Dune::FieldVector<RF,dim> 
           globalpos = eg.geometry().global(it->position());
-        RF F = 0; 
-        RF a = 0; 
         RF factor = it->weight()*eg.geometry().integrationElement(it->position());
         if (s.cylindrical) 
             factor *= globalpos[1]*2*PI;
@@ -124,13 +121,13 @@ public:
         // compute u at integration point
         RF u_phi=0.0;
         for (size_type i=0; i<lfsu_phi.size(); i++)
-          u_phi += x[lfsu_phi.localIndex(i)]*phi_phi[i];
+          u_phi += x(lfsu_phi, i)*phi_phi[i];
         RF u_cp=0.0;
         for (size_type i=0; i<lfsu_cp.size(); i++)
-          u_cp += x[lfsu_cp.localIndex(i)]*phi_cp[i];
+          u_cp += x(lfsu_cp, i)*phi_cp[i];
         RF u_cm=0.0;
         for (size_type i=0; i<lfsu_cm.size(); i++)
-          u_cm += x[lfsu_cm.localIndex(i)]*phi_cm[i];
+          u_cm += x(lfsu_cm, i)*phi_cm[i];
 
         // evaluate gradient of basis functions on reference element
         std::vector<JacobianTypePhi> js_phi(lfsu_phi.size());
@@ -154,35 +151,42 @@ public:
         // compute gradient of u
         Dune::FieldVector<RF,dim> gradu_phi(0.0);
         for (size_type i=0; i<lfsu_phi.size(); i++)
-          gradu_phi.axpy(x[lfsu_phi.localIndex(i)],gradphi_phi[i]);
+          gradu_phi.axpy(x(lfsu_phi, i), gradphi_phi[i]);
         Dune::FieldVector<RF,dim> gradu_cp(0.0);
         for (size_type i=0; i<lfsu_cp.size(); i++)
-          gradu_cp.axpy(x[lfsu_cp.localIndex(i)],gradphi_cp[i]);
+          gradu_cp.axpy(x(lfsu_cp, i), gradphi_cp[i]);
         Dune::FieldVector<RF,dim> gradu_cm(0.0);
         for (size_type i=0; i<lfsu_cm.size(); i++)
-          gradu_cm.axpy(x[lfsu_cm.localIndex(i)],gradphi_cm[i]);
+          gradu_cm.axpy(x(lfsu_cm, i), gradphi_cm[i]);
 
         ////////////////////////// Weak Formulation /////////////////////////////////////////////
         // integrate grad u * grad phi_i + a*u*phi_i - f phi_i
         for (size_type i=0; i<lfsu_phi.size(); i++)
-          r[lfsu_phi.localIndex(i)] += ( gradu_phi*gradphi_phi[i] 
+        {
+          double thisResidual = ( gradu_phi*gradphi_phi[i] 
                                        + 4*PI*s.l_b*(u_cp - u_cm)*phi_phi[i] 
                                        )*factor; 
-
+          r.accumulate(lfsu_phi, i, thisResidual);
+        }
         ////////////////////////// NOW CP /////////////////////////////////////////////
         
         // integrate grad u * grad cp_i + a*u*cp_i - f cp_i
         for (size_type i=0; i<lfsu_cp.size(); i++)
-          r[lfsu_cp.localIndex(i)] += ( gradu_cp*gradphi_cp[i] 
+        {
+          double thisResidual = ( gradu_cp*gradphi_cp[i] 
                                         - u_cp*(gradu_phi*gradphi_cp[i])
                                         )*factor; 
-
+          r.accumulate(lfsu_cp, i, thisResidual);
+        }
         ///////////////////////// Finally CM ////////////////////////////////////////
 
         // integrate grad u * grad cm_i + a*u*cm_i - f cm_i
         for (size_type i=0; i<lfsu_cm.size(); i++)
-          r[lfsu_cm.localIndex(i)] += ( gradu_cm*gradphi_cm[i] 
+        {
+          double thisResidual = ( gradu_cm*gradphi_cm[i] 
                                         + u_cm*(gradu_phi*gradphi_cm[i]) )*factor; 
+          r.accumulate(lfsu_cm, i, thisResidual);
+        }
       }
   }
 
@@ -272,25 +276,36 @@ public:
               
           // integrate j
           for (size_type i=0; i<lfsv_phi.size(); i++)
-            r_s[lfsu_phi.localIndex(i)] += j*phi_phi[i]*factor;
+          {
+            double thisResidual_s =  j*phi_phi[i]*factor;
+            r_s.accumulate(lfsu_phi, i, thisResidual_s);       
+          }
         }
         
         if (!cpBtype ) {
+
           // evaluate flux boundary condition
           j = fluxContainer[ig.intersection().boundarySegmentIndex()][1];
  
           // integrate j
           for (size_type i=0; i<lfsv_cp.size(); i++)
-            r_s[lfsu_cp.localIndex(i)] += j*phi_cp[i]*factor;
+          {
+            double thisResidual_s = j*phi_cp[i]*factor;
+            r_s.accumulate(lfsu_cp, i, thisResidual_s);
+          }
         }
+
         if (!cmBtype ) {
-              
+
           // evaluate flux boundary condition
           j = fluxContainer[ig.intersection().boundarySegmentIndex()][2];
               
           // integrate j
           for (size_type i=0; i<lfsv_cm.size(); i++)
-            r_s[lfsu_cm.localIndex(i)] += j*phi_cm[i]*factor;
+          {
+            double thisResidual_s = j*phi_cm[i]*factor;
+            r_s.accumulate(lfsu_cm, i, thisResidual_s);
+          }
         }
     }
   }

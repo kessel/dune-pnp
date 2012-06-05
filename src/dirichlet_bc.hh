@@ -20,9 +20,6 @@ public :
 
   const inline bool global_on_intersection(Dune::FieldVector<ctype, GV::dimensionworld> integrationPointGlobal, IntersectionIterator& ii ) const 
   {
-    ctype dist;
-    ctype this_dist;
-
 
     if (GV::dimensionworld == 2) {
       Dune::FieldVector<ctype,GV::dimensionworld> p_vec = ii->geometry().corner(1) - ii->geometry().corner(0);
@@ -62,7 +59,6 @@ public :
     //
 
     Dune::FieldVector<ctype,GV::dimensionworld> integrationPointGlobal =  e.geometry().global(xlocal);
-    int counter = 0;
     int physgroup_index = -1;
     for (IntersectionIterator ii = gv.ibegin(e); ii != gv.iend(e) ; ++ii) {
       if (ii->boundary()) {
