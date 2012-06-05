@@ -234,13 +234,13 @@ void stationary_pnp(Sysparams s, GV gv, std::vector<int> boundaryIndexToEntity, 
     GO go(gfs,cc,gfs,cc,lop);
 
     // <<<5a>>> Select a linear solver backend
-    typedef Dune::PDELab::ISTLBackend_NOVLP_BCGS_SSORk<GO> LS; 
-    LS ls( gfs, 5000, 5, s.verbosity );
+//    typedef Dune::PDELab::ISTLBackend_NOVLP_BCGS_SSORk<GO> LS; 
+//    LS ls( gfs, 5000, 5, s.verbosity );
 //    typedef Dune::PDELab::ISTLBackend_NOVLP_CG_NOPREC<GFS> LS;
 //    LS ls( gfs, 5000, s.verbosity );
 
-//    typedef Dune::PDELab::ISTLBackend_NOVLP_CG_Jacobi<GFS> LS;
-//    LS ls( gfs, 5000, s.verbosity );
+    typedef Dune::PDELab::ISTLBackend_NOVLP_CG_Jacobi<GFS> LS;
+    LS ls( gfs, 5000, s.verbosity );
 //
 //    
 //    ISTLBackend_AMG_NOVLP
@@ -269,7 +269,7 @@ void stationary_pnp(Sysparams s, GV gv, std::vector<int> boundaryIndexToEntity, 
     newton.setMinLinearReduction(1e-2);
     newton.setMaxIterations(5000);
     newton.setLineSearchMaxIterations(50);
-//    newton.apply();
+    newton.apply();
 
 
   // <<<7>>> graphical output
@@ -299,7 +299,7 @@ void stationary_pnp(Sysparams s, GV gv, std::vector<int> boundaryIndexToEntity, 
   
   DataWriter<GV, double, 0> dw(gv, helper);
   std::string s1("solution");
-  std::string s2("solution.dat");
+  std::string s2("solution");
   dw.writePNPCellData(gfs, u, s1, s2); 
 
  
@@ -334,11 +334,11 @@ void stationary_pnp(Sysparams s, GV gv, std::vector<int> boundaryIndexToEntity, 
 //    }
  
 
-  std::cout << "------- ION CURRENTS --------" << std::endl;
-  calcIonFlux<GV, GFS, U, PG, std::vector<I>, Sysparams >(gv, gfs, u, boundaryIndexToEntity, ip, im, s);
-  for (unsigned int i = 0; i<s.n_surfaces; i++) {
-    std::cout << i << " " << ip[i] << " " << im[i] << std::endl;
-  }
+  //std::cout << "------- ION CURRENTS --------" << std::endl;
+  //calcIonFlux<GV, GFS, U, PG, std::vector<I>, Sysparams >(gv, gfs, u, boundaryIndexToEntity, ip, im, s);
+  //for (unsigned int i = 0; i<s.n_surfaces; i++) {
+  //  std::cout << i << " " << ip[i] << " " << im[i] << std::endl;
+  //}
   
 
 }

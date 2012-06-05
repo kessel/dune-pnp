@@ -234,8 +234,8 @@ class DataWriter {
       std::ostringstream pieceName;
       if( helper.size() > 1 )
       {
-        pieceName << "s" << std::setfill( '0' ) << std::setw( 4 ) << helper.size() << ":";
-        pieceName << "p" << std::setfill( '0' ) << std::setw( 4 ) << helper.rank() << ":";
+        pieceName << "s" << std::setfill( '0' ) << std::setw( 4 ) << helper.size() << "-";
+        pieceName << "p" << std::setfill( '0' ) << std::setw( 4 ) << helper.rank() << "-";
       }
       pieceName << name << ".dat";
       return pieceName.str();

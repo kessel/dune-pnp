@@ -120,7 +120,7 @@ public :
  break;
       }
     if (s.verbosity > 1) {
-       std::cout << "boundary " << integrationPointGlobal << " type " << physgroup_index << " " << y << std::endl;
+       //std::cout << "boundary " << integrationPointGlobal << " type " << physgroup_index << " " << y << std::endl;
     }
     return;
   }
