@@ -6,6 +6,83 @@
 #include<dune/pdelab/gridfunctionspace/gridfunctionspaceutilities.hh>
 #include<ionFlux.hh>
 
+template<typename GV, typename RF>
+class Phi0Initial
+  : public Dune::PDELab::GridFunctionBase<Dune::PDELab::
+           GridFunctionTraits<GV,RF,1,Dune::FieldVector<RF,1> >, Phi0Initial<GV,RF> >
+{
+  const GV& gv;
+public:
+  typedef Dune::PDELab::GridFunctionTraits<GV,RF,1,Dune::FieldVector<RF,1> > Traits;
+
+  //! construct from grid view
+  Phi0Initial (const GV& gv_) 
+    : gv(gv_)  
+  {}
+
+  //! evaluate extended function on element
+  inline void evaluate (const typename Traits::ElementType& e, 
+                        const typename Traits::DomainType& xlocal,
+                        typename Traits::RangeType& y) const
+  {  
+    y=0;
+  }
+  
+  //! get a reference to the grid view
+  inline const GV& getGridView () {return gv;}
+};
+
+template<typename GV, typename RF>
+class CpInitial
+  : public Dune::PDELab::GridFunctionBase<Dune::PDELab::
+           GridFunctionTraits<GV,RF,1,Dune::FieldVector<RF,1> >, CpInitial<GV,RF> >
+{
+  const GV& gv;
+public:
+  typedef Dune::PDELab::GridFunctionTraits<GV,RF,1,Dune::FieldVector<RF,1> > Traits;
+
+  //! construct from grid view
+  CpInitial (const GV& gv_) 
+    : gv(gv_)  
+  {}
+
+  //! evaluate extended function on element
+  inline void evaluate (const typename Traits::ElementType& e, 
+                        const typename Traits::DomainType& xlocal,
+                        typename Traits::RangeType& y) const
+  {  
+    y=0.06;
+  }
+  
+  //! get a reference to the grid view
+  inline const GV& getGridView () {return gv;}
+};
+
+template<typename GV, typename RF>
+class CmInitial
+  : public Dune::PDELab::GridFunctionBase<Dune::PDELab::
+           GridFunctionTraits<GV,RF,1,Dune::FieldVector<RF,1> >, CmInitial<GV,RF> >
+{
+  const GV& gv;
+public:
+  typedef Dune::PDELab::GridFunctionTraits<GV,RF,1,Dune::FieldVector<RF,1> > Traits;
+
+  //! construct from grid view
+  CmInitial (const GV& gv_) 
+    : gv(gv_)  
+  {}
+
+  //! evaluate extended function on element
+  inline void evaluate (const typename Traits::ElementType& e, 
+                        const typename Traits::DomainType& xlocal,
+                        typename Traits::RangeType& y) const
+  {  
+    y=0.06;
+  }
+  
+  //! get a reference to the grid view
+  inline const GV& getGridView () {return gv;}
+};
 
 template<class GV>
 void stationary_pnp(Sysparams s, GV gv, std::vector<int> boundaryIndexToEntity, std::vector<int> elementIndexToEntity, Dune::MPIHelper& helper) {
@@ -20,28 +97,34 @@ void stationary_pnp(Sysparams s, GV gv, std::vector<int> boundaryIndexToEntity, 
   
   typedef Dune::PDELab::ISTLVectorBackend<1> VectorBackend;
 
-  typedef Dune::PDELab::Pk2DLocalFiniteElementMap<GV, Coord,Real, 3> PhiFEM;
-  typedef Dune::PDELab::Pk2DLocalFiniteElementMap<GV, Coord,Real, 3> CpFEM;
-  typedef Dune::PDELab::Pk2DLocalFiniteElementMap<GV, Coord,Real, 3> CmFEM;
+  typedef Dune::PDELab::Pk2DLocalFiniteElementMap<GV, Coord,Real, 1> PhiFEM;
+  typedef Dune::PDELab::Pk2DLocalFiniteElementMap<GV, Coord,Real, 1> CpFEM;
+  typedef Dune::PDELab::Pk2DLocalFiniteElementMap<GV, Coord,Real, 1> CmFEM;
   PhiFEM phiFem(gv);
   CpFEM cpFEM(gv);
   CmFEM cmFEM(gv);
 
   
-  typedef Dune::PDELab::ConformingDirichletConstraints CON;     // constraints class
+  typedef Dune::PDELab::NonoverlappingConformingDirichletConstraints CON;     // constraints class
+  CON phiCon;
+  CON cplusCon;
+  CON cminusCon;
   typedef Dune::PDELab::SimpleGridFunctionStaticSize GFSSize; // what is that?
 
   typedef Dune::PDELab::GridFunctionSpace
    <GV, PhiFEM, CON, VectorBackend, GFSSize> PhiGFS;
-  PhiGFS phiGFS(gv, phiFem);
+  PhiGFS phiGFS(gv, phiFem, phiCon);
+  phiCon.compute_ghosts(phiGFS);
 
   typedef Dune::PDELab::GridFunctionSpace
    <GV, CpFEM, CON, VectorBackend, GFSSize> CpGFS;
-  CpGFS cpGFS(gv, cpFEM);
+  CpGFS cpGFS(gv, cpFEM, cplusCon);
+  cplusCon.compute_ghosts(cpGFS);
 
   typedef Dune::PDELab::GridFunctionSpace
    <GV, CmFEM, CON, VectorBackend, GFSSize> CmGFS;
-  CmGFS cmGFS(gv, cmFEM);
+  CmGFS cmGFS(gv, cmFEM, cminusCon);
+  cminusCon.compute_ghosts(cmGFS);
 
   typedef Dune::PDELab::GridFunctionSpaceLexicographicMapper GFMapper;
 
@@ -63,15 +146,17 @@ void stationary_pnp(Sysparams s, GV gv, std::vector<int> boundaryIndexToEntity, 
   CpBC_T cpB_t(gv, boundaryIndexToEntity, s);
   typedef BCType<GV, std::vector<int>, Sysparams, 2 > CmBC_T;
   CmBC_T cmB_t(gv, boundaryIndexToEntity, s);
-  typedef Dune::PDELab::CompositeGridFunction<PhiBC_T, CpBC_T, CmBC_T> BT;
+
+  typedef Dune::PDELab::CompositeConstraintsParameters<PhiBC_T, CpBC_T, CmBC_T> BT;
+//  typedef Dune::PDELab::CompositeGridFunction<PhiBC_T, CpBC_T, CmBC_T> BT;
   BT bt(phiB_t, cpB_t, cmB_t);
 
   typedef typename GFS::template ConstraintsContainer<Real>::Type CC;
   CC cc;
   Dune::PDELab::constraints(bt,gfs,cc); 
 
-
-
+  std::cout << "/" << gv.comm().rank() << "/ " << "constrained dofs=" << cc.size()
+    << " of " << gfs.globalSize() << std::endl;
 
 
   typedef std::vector<std::vector<double > > FluxContainer;
@@ -108,6 +193,17 @@ void stationary_pnp(Sysparams s, GV gv, std::vector<int> boundaryIndexToEntity, 
   U u(gfs ,0.0);
   Dune::PDELab::set_shifted_dofs(cc,0.0,u);
 
+  typedef Phi0Initial<GV, double> Phi;
+  Phi phi(gv);
+  typedef CpInitial<GV, double> Cp;
+  Cp cp(gv);
+  typedef CmInitial<GV, double> Cm;
+  Cm cm(gv);
+
+  typedef Dune::PDELab::CompositeGridFunction<Phi, Cp, Cm> InitialValues;
+  InitialValues initial(phi, cp, cm);
+
+//  Dune::PDELab::interpolate(initial,gfs ,u);
   Dune::PDELab::interpolate(bce,gfs ,u);
   
   typedef PnpOperator<PhiBC_T, CpBC_T, CmBC_T, int, Sysparams, FluxContainer> LOP;
@@ -115,6 +211,7 @@ void stationary_pnp(Sysparams s, GV gv, std::vector<int> boundaryIndexToEntity, 
 
   
   
+  exit(1);
 //  typedef Dune::PDELab::ISTLBCRSMatrixBackend<1,1> MBE;
 //  typedef Dune::PDELab::GridOperatorSpace<GFS,GFS,LOP,CC,CC,MBE> GOS;
 //  GOS gos(gfs,cc,gfs,cc,lop);
@@ -134,19 +231,41 @@ void stationary_pnp(Sysparams s, GV gv, std::vector<int> boundaryIndexToEntity, 
     GOS gos(gfs,cc,gfs,cc,lop);
 
     // <<<5a>>> Select a linear solver backend
-    typedef Dune::PDELab::ISTLBackend_NOVLP_BCGS_SSORk<GOS,double> LS;
-    LS ls(gfs);
+    typedef Dune::PDELab::ISTLBackend_NOVLP_BCGS_SSORk<GOS,double> LS; 
+    LS ls( gfs, 5000, 5, s.verbosity );
+//    typedef Dune::PDELab::ISTLBackend_NOVLP_CG_NOPREC<GFS> LS;
+//    LS ls( gfs, 5000, s.verbosity );
+
+//    typedef Dune::PDELab::ISTLBackend_NOVLP_CG_Jacobi<GFS> LS;
+//    LS ls( gfs, 5000, s.verbosity );
+//
+//    
+//    ISTLBackend_AMG_NOVLP
+//    typedef Dune::PDELab::ISTLBackend_NOVLP_CG_AMG_SSOR<GOS,double> LS;
+//    LS ls( gfs, 2, 5000, s.verbosity );
+//    
+//    
+//    typedef Dune::PDELab::ISTLBackend_NOVLP_BCGS_NOPREC<GFS> LS;
+//    LS ls( gfs, 5000, s.verbosity );
+
+
+// typedef Dune::PDELab::ISTLBackend_SEQ_BCGS_SSOR LS;
+//typedef Dune::PDELab::ISTLBackend_SEQ_SuperLU LS;
+//typedef Dune::PDELab::ISTLBackend_SEQ_CG_ILU0 LS;
+//typedef Dune::PDELab::ISTLBackend_SEQ_BCGS_AMG_SOR<GFS> LS;
+
 
     // <<<5b>>> Solve nonlinear problem
     typedef Dune::PDELab::Newton<GOS,LS,U> NEWTON;
     NEWTON newton(gos,u,ls);
     newton.setLineSearchStrategy(newton.hackbuschReuskenAcceptBest);
+//    newton.setLineSearchStrategy(newton.noLineSearch);
     newton.setReassembleThreshold(0.0);
     newton.setVerbosityLevel(s.verbosity);
-    newton.setReduction(1e-15);
-    newton.setMinLinearReduction(1e-8);
-    newton.setMaxIterations(50);
-    newton.setLineSearchMaxIterations(25);
+    newton.setReduction(1e-5);
+    newton.setMinLinearReduction(1e-2);
+    newton.setMaxIterations(5000);
+    newton.setLineSearchMaxIterations(50);
     newton.apply();
 
 
@@ -215,7 +334,7 @@ void stationary_pnp(Sysparams s, GV gv, std::vector<int> boundaryIndexToEntity, 
  
 
   std::cout << "------- ION CURRENTS --------" << std::endl;
-  calcIonFlux<GV, GFS, U, PG, std::vector<I> >(gv, gfs, u, boundaryIndexToEntity, ip, im);
+  calcIonFlux<GV, GFS, U, PG, std::vector<I>, Sysparams >(gv, gfs, u, boundaryIndexToEntity, ip, im, s);
   for (unsigned int i = 0; i<s.n_surfaces; i++) {
     std::cout << i << " " << ip[i] << " " << im[i] << std::endl;
   }

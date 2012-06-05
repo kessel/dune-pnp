@@ -1,8 +1,11 @@
 
+
+
+#define PI 3.1415
 typedef double Real;
 
-template<class GV, class GFS, class U, class PG, class C>
-void calcIonFlux(const GV& gv, const GFS& gfs, const U& u, const PG& pg, C& ip, C& im) {
+template<class GV, class GFS, class U, class PG, class C, class S>
+void calcIonFlux(const GV& gv, const GFS& gfs, const U& u, const PG& pg, C& ip, C& im, S& s) {
 
   const int dim = GV::dimensionworld;
   
@@ -65,20 +68,23 @@ void calcIonFlux(const GV& gv, const GFS& gfs, const U& u, const PG& pg, C& ip, 
 
 
             Real factor = ii->geometry().volume();
-//            gradCp *= -factor;
-//            gradCm *= -factor;
-//            gradphi *= factor;
+            if (s.cylindrical)
+                factor *= 2*PI*it->geometry().global(local)[1]; 
+            gradCp *= -factor;
+            gradCm *= -factor;
+            gradphi *= factor;
 
-//            gradphi*=-cp;
+            gradphi*=cp;
 
       if (ii->boundary()) {
             int physgroup_index = pg[ii->boundarySegmentIndex()]; 
-            ip[physgroup_index] += ( gradCp - gradphi );
+            ip[physgroup_index][0] += ( gradCp + gradphi )*ii->unitOuterNormal(ii->geometry().local(evalPos));
             std::cout  << it->geometry().global(local)  << " "
               << phi << " " << cp << " " << cm << " " << gradphi << " " << gradCp << " " << gradCm << " flux" << std::endl;
 
             gradphi*=cm/cp;
-            im[physgroup_index] += ( gradCm + gradphi );
+            im[physgroup_index][0] += ( gradCm - gradphi )*ii->unitOuterNormal(ii->geometry().local(evalPos));
+
  //           std::cout << "flux " << it->geometry().global(local) << " " << ( gradCp ) * ii->outerNormal(ii->geometry().local(evalPos)) << " " << ( gradCm ) * ii->outerNormal(ii->geometry().local(evalPos))  << " " <<  ( gradphi ) * ii->outerNormal(ii->geometry().local(evalPos)) << " " << cp << " " << cm << " " << physgroup_index << std::endl;
 
 

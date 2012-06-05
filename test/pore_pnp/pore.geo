@@ -1,7 +1,7 @@
 
-dna_refinement = 1.;
-inner_pore_refinement = .5;
-outer_pore_refinement = .5;
+dna_refinement = .1;
+inner_pore_refinement = .2;
+outer_pore_refinement = .2;
 box_refinement = 4.;
 pore_radius_left = 5;
 pore_radius=10;
@@ -20,6 +20,8 @@ Point(0) = { -pore_length/2, box_size_r ,  0, outer_pore_refinement };
 Point(1) = { -pore_length/2, pore_radius + smoothing_radius , 0, inner_pore_refinement };
 Point(2) = { -pore_length/2+smoothing_radius, pore_radius , 0, inner_pore_refinement };
 Point(3) = { -pore_length/2+smoothing_radius, pore_radius + smoothing_radius , 0, inner_pore_refinement };
+
+point(17) = { 0, 7, 0, 1 };
 
 Point(4) = { +pore_length/2, box_size_r , 0, outer_pore_refinement };
 Point(5) = { +pore_length/2, pore_radius_left + smoothing_radius , 0, inner_pore_refinement };

@@ -67,7 +67,6 @@ PnpSolverMain::~PnpSolverMain() {
 }
 
 void PnpSolverMain::run(std::string configfile) {
-  std::cout << "I want to solve!!" << std::endl;
 
   Sysparams s;
   s.readConfigFile(configfile);
@@ -85,15 +84,36 @@ void PnpSolverMain::run(std::string configfile) {
   typedef Dune::UGGrid<dimgrid> GridType;
   Dune::GridFactory<GridType> factory;
 
+   
+  if(helper.rank() == 0)
+  {
     // read a gmsh file
-  Dune::GmshReader<GridType> gmshreader;
-  gmshreader.read(factory, s.meshfile, boundaryIndexToEntity, elementIndexToEntity, true, true);
+    Dune::GmshReader<GridType> gmshreader;
+    gmshreader.read(factory, s.meshfile, boundaryIndexToEntity, elementIndexToEntity, true, true);
+  }
 
+
+    // read a gmsh file
+
+  Dune::CollectiveCommunication<Dune::MPIHelper::MPICommunicator> colCom(helper.getCommunicator());
 
   // Here go the main settings what we want to use:
   const int dim=2;
 
+    // Communicate boundary vector
+  int size = boundaryIndexToEntity.size();
+  colCom.broadcast (&size, 1, 0);
+  if (helper.rank() > 0)
+    boundaryIndexToEntity.resize(size);
+  colCom.broadcast(&boundaryIndexToEntity[0],size,0);
+
+  std::cout << helper.rank() << " " << boundaryIndexToEntity.size() << std::endl;
+
+
+
   GridType* grid = factory.createGrid();
+
+  std::cout << "Grid has been modified by load balancing: " << grid->loadBalance() << std::endl;
 
 //  Dune::gridinfo(grid);
 

@@ -36,6 +36,8 @@ void Sysparams::readConfigFile(std::string config_file) {
   verbosity=configuration.get<int>("system.verbosity");
 
   cylindrical=configuration.get<int>("system.cylindrical");
+
+  l_b=configuration.get<double>("system.l_b");
   
   Surface temp;
   for (int i = 0; i < n_surfaces; i++)

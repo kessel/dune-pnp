@@ -71,7 +71,7 @@ public :
             physgroup_index = pg[ii->boundarySegmentIndex()];
           }
         }
-      } else {
+      } else if (ii->neighbor()) {
         typename GV::Traits::Grid::template Codim<0>::EntityPointer o( ii->outside() );
         for  (IntersectionIterator ii2 = gv.ibegin(*o); ii2 != gv.iend(*o) ; ++ii2) {
           if (ii2->boundary()) {
@@ -96,24 +96,31 @@ public :
         }
       }
     }
-    if (physgroup_index >= 0) {
         switch (component){
           case 0:
-            if (s.surfaces[physgroup_index].coulombBtype == 0) {
-              y = s.surfaces[physgroup_index].coulombPotential; break;
+            if (physgroup_index > -1 && s.surfaces[physgroup_index].coulombBtype == 0) {
+              y = s.surfaces[physgroup_index].coulombPotential;
+            } else {
+              y = 0;
             }
+ break;
           case 1:
-            if (s.surfaces[physgroup_index].plusDiffusionBtype == 0) {
-              y = s.surfaces[physgroup_index].plusDiffusionConcentration; break;
+            if (physgroup_index > -1 && s.surfaces[physgroup_index].plusDiffusionBtype == 0) {
+              y = s.surfaces[physgroup_index].plusDiffusionConcentration; 
+            } else {
+              y = 0.06;
             }
+ break;
           case 2:
-            if (s.surfaces[physgroup_index].minusDiffusionBtype == 0) {
-              y = s.surfaces[physgroup_index].minusDiffusionConcentration; break;
+            if (physgroup_index > -1 && s.surfaces[physgroup_index].minusDiffusionBtype == 0) {
+              y = s.surfaces[physgroup_index].minusDiffusionConcentration; 
+            } else {
+              y = 0.06;
             }
+ break;
       }
-    }
     if (s.verbosity > 1) {
-       std::cout << "boundary " << integrationPointGlobal << " type " << physgroup_index << std::endl;
+       std::cout << "boundary " << integrationPointGlobal << " type " << physgroup_index << " " << y << std::endl;
     }
     return;
   }

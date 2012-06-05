@@ -20,6 +20,7 @@ class Sysparams {
     double tend;
     int verbosity;
     bool cylindrical;
+    double l_b;
 };
 
 class Surface {
