@@ -3,9 +3,9 @@
 
 
 template<typename GV, typename PGMap, class S, const int component>
-class BCType : public Dune::PDELab::BoundaryGridFunctionBase<
-        Dune::PDELab::BoundaryGridFunctionTraits<GV,int,1,
-        Dune::FieldVector<int,1> >,BCType<GV,PGMap, S, component> >
+class BCType : 
+   public Dune::PDELab::DirichletConstraintsParameters
+
 {
 public:
 
@@ -19,8 +19,7 @@ public:
 
   //! return bc type at point on intersection
   template<typename I>
-  inline void evaluate (I& i, const typename Traits::DomainType& xlocal,
-                        typename Traits::RangeType& y) const
+  bool isDirichlet (I& i, const typename Traits::DomainType& xlocal) const
   {
 
     /** use physical index to determine B.C.
@@ -33,23 +32,23 @@ public:
     switch (component) {
       case 0:
         if (s.surfaces[physgroup_index].coulombBtype==0) {
-          y = 1; return;
+          return true;
         } else {
-          y = 0; return;
+          return false;
         }
       case 1:
         if (s.surfaces[physgroup_index].plusDiffusionBtype==0) {
-          y = 1; return;
+          return true;
         } else {
-          y = 0; return;
+          return false;
         }
       case 2:
         if (s.surfaces[physgroup_index].plusDiffusionBtype==0) {
-          y = 1; return;
+          return true;
         } else {
-          y = 0; return;
+          return false;
         }
-    return;
+    return false;
     }
   }
 

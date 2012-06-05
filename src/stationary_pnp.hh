@@ -5,6 +5,7 @@
 #include"pnp_operator.hh"
 #include<dune/pdelab/gridfunctionspace/gridfunctionspaceutilities.hh>
 #include<ionFlux.hh>
+#include<dune/pdelab/newton/newton.hh>
 
 template<typename GV, typename RF>
 class Phi0Initial
@@ -189,7 +190,8 @@ void stationary_pnp(Sysparams s, GV gv, std::vector<int> boundaryIndexToEntity, 
 
   int f = 5; 
 
-  typedef typename GFS::template VectorContainer<Real>::Type U;
+//  typedef typename GFS::template VectorContainer<Real>::Type U;
+  typedef typename Dune::PDELab::BackendVectorSelector<GFS,double>::Type U;
   U u(gfs ,0.0);
   Dune::PDELab::set_shifted_dofs(cc,0.0,u);
 
@@ -211,7 +213,6 @@ void stationary_pnp(Sysparams s, GV gv, std::vector<int> boundaryIndexToEntity, 
 
   
   
-  exit(1);
 //  typedef Dune::PDELab::ISTLBCRSMatrixBackend<1,1> MBE;
 //  typedef Dune::PDELab::GridOperatorSpace<GFS,GFS,LOP,CC,CC,MBE> GOS;
 //  GOS gos(gfs,cc,gfs,cc,lop);
@@ -227,11 +228,13 @@ void stationary_pnp(Sysparams s, GV gv, std::vector<int> boundaryIndexToEntity, 
 
 
       typedef Dune::PDELab::ISTLBCRSMatrixBackend<1,1> MBE;
-    typedef Dune::PDELab::GridOperatorSpace<GFS,GFS,LOP,CC,CC,MBE,true> GOS;
-    GOS gos(gfs,cc,gfs,cc,lop);
+   // typedef Dune::PDELab::GridOperatorSpace<GFS,GFS,LOP,CC,CC,MBE,true> GOS;
+   // GOS gos(gfs,cc,gfs,cc,lop);
+    typedef Dune::PDELab::GridOperator     <GFS,GFS,LOP,MBE,double, double, double,CC,CC,true> GO;
+    GO go(gfs,cc,gfs,cc,lop);
 
     // <<<5a>>> Select a linear solver backend
-    typedef Dune::PDELab::ISTLBackend_NOVLP_BCGS_SSORk<GOS,double> LS; 
+    typedef Dune::PDELab::ISTLBackend_NOVLP_BCGS_SSORk<GO> LS; 
     LS ls( gfs, 5000, 5, s.verbosity );
 //    typedef Dune::PDELab::ISTLBackend_NOVLP_CG_NOPREC<GFS> LS;
 //    LS ls( gfs, 5000, s.verbosity );
@@ -256,8 +259,8 @@ void stationary_pnp(Sysparams s, GV gv, std::vector<int> boundaryIndexToEntity, 
 
 
     // <<<5b>>> Solve nonlinear problem
-    typedef Dune::PDELab::Newton<GOS,LS,U> NEWTON;
-    NEWTON newton(gos,u,ls);
+    typedef Dune::PDELab::Newton<GO,LS,U> NEWTON;
+    NEWTON newton(go,u,ls);
     newton.setLineSearchStrategy(newton.hackbuschReuskenAcceptBest);
 //    newton.setLineSearchStrategy(newton.noLineSearch);
     newton.setReassembleThreshold(0.0);
@@ -266,7 +269,7 @@ void stationary_pnp(Sysparams s, GV gv, std::vector<int> boundaryIndexToEntity, 
     newton.setMinLinearReduction(1e-2);
     newton.setMaxIterations(5000);
     newton.setLineSearchMaxIterations(50);
-    newton.apply();
+//    newton.apply();
 
 
   // <<<7>>> graphical output
@@ -293,8 +296,6 @@ void stationary_pnp(Sysparams s, GV gv, std::vector<int> boundaryIndexToEntity, 
 //  gnuplotwriter.addVertexData(new Dune::PDELab::VTKGridFunctionAdapter<PhiDGF>,"solution");
 //  gnuplotwriter.write("yeah.dat"); 
 
-  typename GFS::LocalFunctionSpace lfs(gfs);
-  
   
   DataWriter<GV, double, 0> dw(gv, helper);
   std::string s1("solution");

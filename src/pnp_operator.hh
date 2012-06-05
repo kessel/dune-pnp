@@ -240,14 +240,14 @@ public:
 	 it!=rule.end(); ++it)
     {
         // evaluate boundary condition type
-        typename PhiB::Traits::RangeType phiBtype;
-        phiB.evaluate(ig,it->position(),phiBtype);
+        bool phiBtype;
+        phiBtype = phiB.isDirichlet(ig,it->position());
         
-        typename CpB::Traits::RangeType cpBtype;
-        cpB.evaluate(ig,it->position(),cpBtype);
+        bool cpBtype;
+        cpBtype = cpB.isDirichlet(ig,it->position());
         
-        typename CpB::Traits::RangeType cmBtype;
-        cmB.evaluate(ig,it->position(),cmBtype);
+        bool cmBtype;
+        cmBtype = cmB.isDirichlet(ig,it->position());
           
         // position of quadrature point in local coordinates of element 
         Dune::FieldVector<DF,dim> local = ig.geometryInInside().global(it->position());
@@ -265,7 +265,7 @@ public:
         std::vector<RangeType> phi_cm(lfsu_cm.size());
         lfsu_cm.finiteElement().localBasis().evaluateFunction(local,phi_cm);
 
-        if (phiBtype < 1) {
+        if (!phiBtype ) {
  
           // evaluate flux boundary condition
           j = fluxContainer[ig.intersection().boundarySegmentIndex()][0];
@@ -275,7 +275,7 @@ public:
             r_s[lfsu_phi.localIndex(i)] += j*phi_phi[i]*factor;
         }
         
-        if (cpBtype < 1) {
+        if (!cpBtype ) {
           // evaluate flux boundary condition
           j = fluxContainer[ig.intersection().boundarySegmentIndex()][1];
  
@@ -283,7 +283,7 @@ public:
           for (size_type i=0; i<lfsv_cp.size(); i++)
             r_s[lfsu_cp.localIndex(i)] += j*phi_cp[i]*factor;
         }
-        if (cmBtype < 1) {
+        if (!cmBtype ) {
               
           // evaluate flux boundary condition
           j = fluxContainer[ig.intersection().boundarySegmentIndex()][2];
