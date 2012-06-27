@@ -1,8 +1,8 @@
 
-dna_refinement = .1;
-inner_pore_refinement = .2;
-outer_pore_refinement = .2;
-box_refinement = 4.;
+dna_refinement = .4;
+inner_pore_refinement = .6;
+outer_pore_refinement = .9;
+box_refinement = 3.;
 pore_radius_left = 5;
 pore_radius=10;
 
@@ -11,8 +11,8 @@ pore_length = 20;
 dna_length = 20;
 dna_radius = 1;
 
-box_size_z = 50;
-box_size_r = 15;
+box_size_z = 100;
+box_size_r = 55;
 
 smoothing_radius = 1;
 

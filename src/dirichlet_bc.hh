@@ -1,11 +1,11 @@
 
 
 
-template<typename GV, typename RF, typename PGMap, class S, const int component>
+template<typename GV, typename RF, typename PGMap, class S, const int component, class PhiDGF>
 class BCExtension
   : public Dune::PDELab::GridFunctionBase<Dune::PDELab::
            GridFunctionTraits<GV,RF,1,Dune::FieldVector<RF,1> >,
-           BCExtension<GV,RF,PGMap, S, component> >
+           BCExtension<GV,RF,PGMap, S, component, PhiDGF> >
 {
 public :
 
@@ -14,7 +14,7 @@ public :
   typedef typename GV::ctype ctype;
 
   //! construct from grid view
-  BCExtension(const GV& gv_, const PGMap& pg_, const S& s_) : gv(gv_), pg(pg_), s(s_) {
+  BCExtension(const GV& gv_, const PGMap& pg_, const S& s_, const PhiDGF& p_) : gv(gv_), pg(pg_), s(s_), phiDGF(p_) {
     t = 0;
   }
 
@@ -57,7 +57,6 @@ public :
   {
     //! Set value for potential at outer domain boundaries
     //
-
     Dune::FieldVector<ctype,GV::dimensionworld> integrationPointGlobal =  e.geometry().global(xlocal);
     int physgroup_index = -1;
     for (IntersectionIterator ii = gv.ibegin(e); ii != gv.iend(e) ; ++ii) {
@@ -97,27 +96,29 @@ public :
             if (physgroup_index > -1 && s.surfaces[physgroup_index].coulombBtype == 0) {
               y = s.surfaces[physgroup_index].coulombPotential;
             } else {
-              y = 0;
+              phiDGF.evaluate(e, xlocal, y);
             }
  break;
           case 1:
             if (physgroup_index > -1 && s.surfaces[physgroup_index].plusDiffusionBtype == 0) {
               y = s.surfaces[physgroup_index].plusDiffusionConcentration; 
             } else {
-              y = 0.06;
+              phiDGF.evaluate(e, xlocal, y);
+              y = s.c0*exp(-y);
             }
  break;
           case 2:
             if (physgroup_index > -1 && s.surfaces[physgroup_index].minusDiffusionBtype == 0) {
               y = s.surfaces[physgroup_index].minusDiffusionConcentration; 
             } else {
-              y = 0.06;
+              phiDGF.evaluate(e, xlocal, y);
+              y = s.c0*exp(+y);
             }
  break;
       }
-    if (s.verbosity > 1) {
-       //std::cout << "boundary " << integrationPointGlobal << " type " << physgroup_index << " " << y << std::endl;
-    }
+//    if (s.verbosity > 1) {
+//       std::cout << "boundary " << integrationPointGlobal << " type " << physgroup_index << " " << y << std::endl;
+//    }
     return;
   }
 
@@ -133,6 +134,7 @@ private :
   const GV& gv;
   const PGMap& pg;
   const S& s;
+  const PhiDGF& phiDGF;
   double t;
 };
 

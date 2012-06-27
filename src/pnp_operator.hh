@@ -26,7 +26,8 @@ class PnpOperator :
   public Dune::PDELab::NumericalJacobianApplyBoundary<PnpOperator<PhiB, CpB, CmB, F, S, FluxContainer> >,
   public Dune::PDELab::NumericalJacobianBoundary<PnpOperator<PhiB, CpB, CmB, F, S, FluxContainer> >,
   public Dune::PDELab::FullVolumePattern,
-  public Dune::PDELab::LocalOperatorDefaultFlags
+  public Dune::PDELab::LocalOperatorDefaultFlags, 
+  public Dune::PDELab::InstationaryLocalOperatorDefaultMethods<double>
 {
 public:
   // pattern assembly flags
@@ -36,7 +37,7 @@ public:
   enum { doAlphaVolume = true };
   enum { doAlphaBoundary = true };                                // assemble boundary
   
-  PnpOperator (const PhiB& phiB_, const CpB& cpB_, const CmB& cmB_, const F& f_, S& s_, FluxContainer fluxContainer_, unsigned int intorder_=2)  // needs boundary cond. type
+  PnpOperator (const PhiB& phiB_, const CpB& cpB_, const CmB& cmB_, const F& f_, S& s_, FluxContainer fluxContainer_, unsigned int intorder_=3)  // needs boundary cond. type
     : phiB(phiB_), cpB(cpB_), cmB(cmB_),  f(f_), s(s_),
       fluxContainer(fluxContainer_), intorder(intorder_)
   {}
@@ -129,6 +130,8 @@ public:
         for (size_type i=0; i<lfsu_cm.size(); i++)
           u_cm += x(lfsu_cm, i)*phi_cm[i];
 
+//        std::cout << globalpos << " " << u_phi << " " << u_cp << " " << u_cm << " values" << std::endl;
+
         // evaluate gradient of basis functions on reference element
         std::vector<JacobianTypePhi> js_phi(lfsu_phi.size());
         lfsu_phi.finiteElement().localBasis().evaluateJacobian(it->position(),js_phi);
@@ -184,7 +187,8 @@ public:
         for (size_type i=0; i<lfsu_cm.size(); i++)
         {
           double thisResidual = ( gradu_cm*gradphi_cm[i] 
-                                        + u_cm*(gradu_phi*gradphi_cm[i]) )*factor; 
+                                        + u_cm*(gradu_phi*gradphi_cm[i]) 
+                                        )*factor; 
           r.accumulate(lfsu_cm, i, thisResidual);
         }
       }

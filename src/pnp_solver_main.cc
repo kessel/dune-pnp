@@ -56,8 +56,8 @@
 #include "example03_operator.hh"
 
 
-#include "stationary_diffusion.hh"
-#include "stationary_pnp.hh"
+//#include "stationary_diffusion.hh"
+#include "instationary_pnp_from_pb_md.hh"
 
 
 PnpSolverMain::PnpSolverMain(Dune::MPIHelper &helper_) : helper(helper_) {
@@ -112,7 +112,7 @@ void PnpSolverMain::run(std::string configfile) {
 
   GV gv = grid->leafView();
 
-  stationary_pnp<GV>(s, gv, boundaryIndexToEntity, elementIndexToEntity, helper);
+  instationary_pnp_md<GV>(s, gv, boundaryIndexToEntity, elementIndexToEntity, helper);
 
   /*
 

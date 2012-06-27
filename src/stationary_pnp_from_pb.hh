@@ -3,6 +3,7 @@
 #include <dune/common/mpihelper.hh>
 #include <string>
 #include"pnp_operator.hh"
+#include"pb_operator.hh"
 #include<dune/pdelab/gridfunctionspace/gridfunctionspaceutilities.hh>
 #include<ionFlux.hh>
 #include<dune/pdelab/newton/newton.hh>
@@ -99,63 +100,32 @@ void stationary_pnp(Sysparams s, GV gv, std::vector<int> boundaryIndexToEntity, 
   
   typedef Dune::PDELab::ISTLVectorBackend<1> VectorBackend;
 
-  typedef Dune::PDELab::Pk2DLocalFiniteElementMap<GV, Coord,Real, 1> PhiFEM;
-  typedef Dune::PDELab::Pk2DLocalFiniteElementMap<GV, Coord,Real, 1> CpFEM;
-  typedef Dune::PDELab::Pk2DLocalFiniteElementMap<GV, Coord,Real, 1> CmFEM;
-  PhiFEM phiFem(gv);
-  CpFEM cpFEM(gv);
-  CmFEM cmFEM(gv);
 
-  
-  typedef Dune::PDELab::NonoverlappingConformingDirichletConstraints CON;     // constraints class
-  CON con;
+
+  typedef Dune::PDELab::Pk2DLocalFiniteElementMap<GV, Coord,Real, 1> PbFEM;
+  PbFEM pbFem(gv);
+  typedef Dune::PDELab::NonoverlappingConformingDirichletConstraints PbCON;     // constraints class
+  PbCON pbCon;
   typedef Dune::PDELab::SimpleGridFunctionStaticSize GFSSize; // what is that?
-
   typedef Dune::PDELab::GridFunctionSpace
-   <GV, PhiFEM, CON, VectorBackend, GFSSize> PhiGFS;
-  PhiGFS phiGFS(gv, phiFem, con);
+   <GV, PbFEM, PbCON, VectorBackend, GFSSize> PbGFS;
+  PbGFS pbGFS(gv, pbFem, pbCon);
 
-  typedef Dune::PDELab::GridFunctionSpace
-   <GV, CpFEM, CON, VectorBackend, GFSSize> CpGFS;
-  CpGFS cpGFS(gv, cpFEM, con);
+  pbCon.compute_ghosts(pbGFS);
+  
+  typedef BCType<GV, std::vector<int>, Sysparams, 0 > PbBC_T;
+  PbBC_T pbB_t(gv, boundaryIndexToEntity, s);
+ 
+//  typedef BCExtension<GV, Real,  std::vector<int>, Sysparams, -1 > PbBC;
+//  PbBC pbB(gv, boundaryIndexToEntity, s);
+  
+  typedef typename PbGFS::template ConstraintsContainer<Real>::Type PbCC;
+  PbCC pbcc;
+  Dune::PDELab::constraints(pbB_t,pbGFS,pbcc,false); 
 
-  typedef Dune::PDELab::GridFunctionSpace
-   <GV, CmFEM, CON, VectorBackend, GFSSize> CmGFS;
-  CmGFS cmGFS(gv, cmFEM, con);
+  typedef typename Dune::PDELab::BackendVectorSelector<PbGFS,double>::Type PbU;
+  PbU pbu(pbGFS,0.0);
 
-  typedef Dune::PDELab::GridFunctionSpaceLexicographicMapper GFMapper;
-
-  typedef Dune::PDELab::CompositeGridFunctionSpace<GFMapper,PhiGFS, CpGFS, CmGFS> GFS;
-  GFS gfs(phiGFS, cpGFS, cmGFS);
-
-  con.compute_ghosts(gfs);
-
-  typedef BCExtension<GV, Real,  std::vector<int>, Sysparams, 0 > PhiBC;
-  PhiBC phiB(gv, boundaryIndexToEntity, s);
-  typedef BCExtension<GV, Real,  std::vector<int>, Sysparams, 1 > CpBC;
-  CpBC cpB(gv, boundaryIndexToEntity, s);
-  typedef BCExtension<GV, Real,  std::vector<int>, Sysparams, 2 > CmBC;
-  CmBC cmB(gv, boundaryIndexToEntity, s);
-  typedef Dune::PDELab::CompositeGridFunction<PhiBC, CpBC, CmBC> BCE;
-  BCE bce(phiB, cpB, cmB);
-
-  typedef BCType<GV, std::vector<int>, Sysparams, 0 > PhiBC_T;
-  PhiBC_T phiB_t(gv, boundaryIndexToEntity, s);
-  typedef BCType<GV, std::vector<int>, Sysparams, 1 > CpBC_T;
-  CpBC_T cpB_t(gv, boundaryIndexToEntity, s);
-  typedef BCType<GV, std::vector<int>, Sysparams, 2 > CmBC_T;
-  CmBC_T cmB_t(gv, boundaryIndexToEntity, s);
-
-  typedef Dune::PDELab::CompositeConstraintsParameters<PhiBC_T, CpBC_T, CmBC_T> BT;
-//  typedef Dune::PDELab::CompositeGridFunction<PhiBC_T, CpBC_T, CmBC_T> BT;
-  BT bt(phiB_t, cpB_t, cmB_t);
-
-  typedef typename GFS::template ConstraintsContainer<Real>::Type CC;
-  CC cc;
-  Dune::PDELab::constraints(bt,gfs,cc,false); 
-
-  std::cout << "/" << gv.comm().rank() << "/ " << "constrained dofs=" << cc.size()
-    << " of " << gfs.globalSize() << std::endl;
 
 
   typedef std::vector<std::vector<double > > FluxContainer;
@@ -184,6 +154,111 @@ void stationary_pnp(Sysparams s, GV gv, std::vector<int> boundaryIndexToEntity, 
       }
     }
   }
+
+
+  typedef PBOperator<PbBC_T, int, Sysparams, FluxContainer> PbLOP;
+  PbLOP pblop(pbB_t, 1, s, fluxContainer);
+
+
+  typedef Dune::PDELab::ISTLBCRSMatrixBackend<1,1> MBE;
+  
+  typedef Dune::PDELab::GridOperator     <PbGFS,PbGFS,PbLOP,MBE,double, double, double,PbCC,PbCC,true> PbGO;
+  PbGO pbgo(pbGFS,pbcc,pbGFS,pbcc,pblop);
+  
+  typedef Dune::PDELab::ISTLBackend_NOVLP_BCGS_SSORk<PbGO> PbLS; 
+  PbLS pbls( pbGFS, s.linearSolverIterations, 1, s.verbosity );
+
+  typedef Dune::PDELab::Newton<PbGO,PbLS,PbU> PbNEWTON;
+  PbNEWTON pbnewton(pbgo,pbu,pbls);
+  pbnewton.setLineSearchStrategy(pbnewton.hackbuschReuskenAcceptBest);
+//pb    newton.setLineSearchStrategy(newton.noLineSearch);
+  pbnewton.setReassembleThreshold(s.newtonReassembleThreshold);
+  pbnewton.setVerbosityLevel(s.verbosity);
+  pbnewton.setReduction(s.newtonReduction);
+  pbnewton.setMinLinearReduction(s.newtonMinLinearReduction);
+  pbnewton.setMaxIterations(s.newtonMaxIterations);
+  pbnewton.setLineSearchMaxIterations(s.newtonLineSearchMaxIteration);
+  try {
+    pbnewton.apply();
+  } catch (...) {
+      std::cout << "Something has happened" << std::endl;
+  }
+
+  typedef Dune::PDELab::DiscreteGridFunction<PbGFS, PbU> PbDGF;
+  PbDGF pbDGF(pbGFS, pbu);
+
+  Dune::VTKWriter<GV> vtkwriter(gv,Dune::VTKOptions::conforming);
+  vtkwriter.addVertexData(new Dune::PDELab::VTKGridFunctionAdapter<PbDGF>(pbDGF,"pb"));
+  vtkwriter.write("pb",Dune::VTKOptions::binaryappended);
+
+//  Dune::GnuplotWriter<GV> gnuplotwriter(gv);
+//  gnuplotwriter.addVertexData(pbu,"pb");
+//  gnuplotwriter.write("pb.dat"); 
+
+//  DataWriter<GV, double, 0> dw(gv, helper);
+//  std::string s1("pb");
+//  std::string s2("pb");
+//  dw.writeIpbsCellData(pbDGF, pbu, s1, s2);
+
+
+  // Here comes the PNP Part:
+  
+  typedef Dune::PDELab::Pk2DLocalFiniteElementMap<GV, Coord,Real, 1> PhiFEM;
+  typedef Dune::PDELab::Pk2DLocalFiniteElementMap<GV, Coord,Real, 1> CpFEM;
+  typedef Dune::PDELab::Pk2DLocalFiniteElementMap<GV, Coord,Real, 1> CmFEM;
+  PhiFEM phiFem(gv);
+  CpFEM cpFEM(gv);
+  CmFEM cmFEM(gv);
+
+  typedef Dune::PDELab::NonoverlappingConformingDirichletConstraints CON;     // constraints class
+  CON con;
+
+  typedef Dune::PDELab::GridFunctionSpace
+   <GV, PhiFEM, CON, VectorBackend, GFSSize> PhiGFS;
+  PhiGFS phiGFS(gv, phiFem, con);
+
+  typedef Dune::PDELab::GridFunctionSpace
+   <GV, CpFEM, CON, VectorBackend, GFSSize> CpGFS;
+  CpGFS cpGFS(gv, cpFEM, con);
+
+  typedef Dune::PDELab::GridFunctionSpace
+   <GV, CmFEM, CON, VectorBackend, GFSSize> CmGFS;
+  CmGFS cmGFS(gv, cmFEM, con);
+
+  typedef Dune::PDELab::GridFunctionSpaceLexicographicMapper GFMapper;
+
+  typedef Dune::PDELab::CompositeGridFunctionSpace<GFMapper,PhiGFS, CpGFS, CmGFS> GFS;
+  GFS gfs(phiGFS, cpGFS, cmGFS);
+
+  con.compute_ghosts(gfs);
+
+  typedef BCExtension<GV, Real,  std::vector<int>, Sysparams, 0, PbDGF > PhiBC;
+  PhiBC phiB(gv, boundaryIndexToEntity, s, pbDGF);
+  typedef BCExtension<GV, Real,  std::vector<int>, Sysparams, 1, PbDGF > CpBC;
+  CpBC cpB(gv, boundaryIndexToEntity, s, pbDGF);
+  typedef BCExtension<GV, Real,  std::vector<int>, Sysparams, 2, PbDGF > CmBC;
+  CmBC cmB(gv, boundaryIndexToEntity, s, pbDGF);
+  typedef Dune::PDELab::CompositeGridFunction<PhiBC, CpBC, CmBC> BCE;
+  BCE bce(phiB, cpB, cmB);
+
+  typedef BCType<GV, std::vector<int>, Sysparams, 0 > PhiBC_T;
+  PhiBC_T phiB_t(gv, boundaryIndexToEntity, s);
+  typedef BCType<GV, std::vector<int>, Sysparams, 1 > CpBC_T;
+  CpBC_T cpB_t(gv, boundaryIndexToEntity, s);
+  typedef BCType<GV, std::vector<int>, Sysparams, 2 > CmBC_T;
+  CmBC_T cmB_t(gv, boundaryIndexToEntity, s);
+
+  typedef Dune::PDELab::CompositeConstraintsParameters<PhiBC_T, CpBC_T, CmBC_T> BT;
+//  typedef Dune::PDELab::CompositeGridFunction<PhiBC_T, CpBC_T, CmBC_T> BT;
+  BT bt(phiB_t, cpB_t, cmB_t);
+
+  typedef typename GFS::template ConstraintsContainer<Real>::Type CC;
+  CC cc;
+  Dune::PDELab::constraints(bt,gfs,cc,false); 
+
+  std::cout << "/" << gv.comm().rank() << "/ " << "constrained dofs=" << cc.size()
+    << " of " << gfs.globalSize() << std::endl;
+
 
 
   int f = 5; 
@@ -308,7 +383,7 @@ void stationary_pnp(Sysparams s, GV gv, std::vector<int> boundaryIndexToEntity, 
   typedef Dune::PDELab::DiscreteGridFunction<CmGFSS, U> CmDGF;
   CmDGF cmDGF(cmGFSS, u);
 
-  Dune::VTKWriter<GV> vtkwriter(gv,Dune::VTKOptions::conforming);
+//  Dune::VTKWriter<GV> vtkwriter(gv,Dune::VTKOptions::conforming);
   vtkwriter.addVertexData(new Dune::PDELab::VTKGridFunctionAdapter<PhiDGF>(phiDGF,"Phi"));
   vtkwriter.addVertexData(new Dune::PDELab::VTKGridFunctionAdapter<CpDGF>(cpDGF,"Cp"));
   vtkwriter.addVertexData(new Dune::PDELab::VTKGridFunctionAdapter<CmDGF>(cmDGF,"Cm"));

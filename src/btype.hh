@@ -27,8 +27,8 @@ public:
     *   \arg 0 is for Dirichlet surfaces
     *   \arg 1 for Neumann
     *   \arg 2 for iPBS iterated boundaries  */
-
     int physgroup_index = pg[i.intersection().boundarySegmentIndex()];
+//    std::cout << "intersection " << i.intersection().geometry().global(xlocal) << " " << physgroup_index << std::endl;
     switch (component) {
       case 0:
         if (s.surfaces[physgroup_index].coulombBtype==0) {
@@ -43,13 +43,13 @@ public:
           return false;
         }
       case 2:
-        if (s.surfaces[physgroup_index].plusDiffusionBtype==0) {
+        if (s.surfaces[physgroup_index].minusDiffusionBtype==0) {
           return true;
         } else {
           return false;
         }
-    return false;
     }
+    return false;
   }
 
   //! get a reference to the grid view

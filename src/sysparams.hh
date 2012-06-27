@@ -21,6 +21,19 @@ class Sysparams {
     int verbosity;
     bool cylindrical;
     double l_b;
+    int linearSolverIterations;
+    double newtonReassembleThreshold;
+    double newtonReduction;
+    double newtonMinLinearReduction;
+    double newtonMaxIterations;
+    double newtonLineSearchMaxIteration;
+    double c0;
+    double tau;
+    int outputFreq;
+    int nSteps;
+    int potentialUpdateFreq;
+
+    int printStiffnessMatrix;
 };
 
 class Surface {

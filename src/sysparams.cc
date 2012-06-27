@@ -43,6 +43,21 @@ void Sysparams::readConfigFile(std::string config_file) {
   for (int i = 0; i < n_surfaces; i++)
     surfaces.push_back(temp);
 
+  linearSolverIterations=configuration.get<int>("system.linearSolverIterations");
+  newtonReassembleThreshold=configuration.get<double>("system.newtonReassembleThreshold");
+  newtonReduction=configuration.get<double>("system.newtonReduction");
+  newtonMinLinearReduction=configuration.get<double>("system.newtonMinLinearReduction");
+  newtonMaxIterations=configuration.get<double>("system.newtonMaxIterations");
+  newtonLineSearchMaxIteration=configuration.get<double>("system.newtonLineSearchMaxIteration");
+  tau=configuration.get<double>("system.tau");
+  c0=configuration.get<double>("system.c0");
+  nSteps=configuration.get<int>("system.nSteps");
+  outputFreq=configuration.get<int>("system.outputFreq");
+  potentialUpdateFreq=configuration.get<int>("system.potentialUpdateFreq");
+
+  printStiffnessMatrix=configuration.get<int>("system.printStiffnessMatrix");
+
+
   for(int i = 0; i < n_surfaces; i++)
   {
     std::string p_name = "surface_";

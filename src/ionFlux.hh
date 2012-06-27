@@ -4,28 +4,22 @@
 #define PI 3.1415
 typedef double Real;
 
-template<class GV, class GFS, class U, class PG, class C, class S>
-void calcIonFlux(const GV& gv, const GFS& gfs, const U& u, const PG& pg, C& ip, C& im, S& s) {
+template<class GV, class PhiGFS, class CpGFS, class CmGFS, class UPhi, class UCp, class UCm, class PG, class C, class S>
+void calcIonFlux(const GV& gv, const PhiGFS& phiGFS, const CmGFS & cmGFS, const CpGFS & cpGFS, const UPhi& uphi, const UCp& ucp, const UCm & ucm,  const PG& pg, C& ip, C& im, S& s) {
 
   const int dim = GV::dimensionworld;
   
-  typedef typename Dune::PDELab::GridFunctionSubSpace<GFS,0> PhiGFSS;
-  PhiGFSS phiGFSS(gfs);
-  typedef Dune::PDELab::DiscreteGridFunction<PhiGFSS, U> PhiDGF;
-  PhiDGF phiDGF(phiGFSS, u);
-  typename Dune::PDELab::DiscreteGridFunctionGradient < PhiGFSS, U> gradPhiF(phiGFSS,u);
+  typedef Dune::PDELab::DiscreteGridFunction<PhiGFS, UPhi> PhiDGF;
+  PhiDGF phiDGF(phiGFS, uphi);
+  typename Dune::PDELab::DiscreteGridFunctionGradient < PhiGFS, UPhi> gradPhiF(phiGFS,uphi);
 
-  typedef typename Dune::PDELab::GridFunctionSubSpace<GFS,1> CpGFSS;
-  CpGFSS cpGFSS(gfs);
-  typedef Dune::PDELab::DiscreteGridFunction<CpGFSS, U> CpDGF;
-  CpDGF cpDGF(cpGFSS, u);
-  typename Dune::PDELab::DiscreteGridFunctionGradient < CpGFSS, U> gradCpF(cpGFSS,u);
+  typedef Dune::PDELab::DiscreteGridFunction<CpGFS, UCp> CpDGF;
+  CpDGF cpDGF(cpGFS, ucp);
+  typename Dune::PDELab::DiscreteGridFunctionGradient < CpGFS, UCp> gradCpF(cpGFS,ucp);
   
-  typedef typename Dune::PDELab::GridFunctionSubSpace<GFS,2> CmGFSS;
-  CmGFSS cmGFSS(gfs);
-  typedef Dune::PDELab::DiscreteGridFunction<CmGFSS, U> CmDGF;
-  CmDGF cmDGF(cmGFSS, u);
-  typename Dune::PDELab::DiscreteGridFunctionGradient < CmGFSS, U> gradCmF(cmGFSS,u);
+  typedef Dune::PDELab::DiscreteGridFunction<CmGFS, UCm> CmDGF;
+  CmDGF cmDGF(cmGFS, ucm);
+  typename Dune::PDELab::DiscreteGridFunctionGradient < CmGFS, UCm> gradCmF(cmGFS,ucm);
 
   
   typedef typename PhiDGF::Traits::RangeType phiRT;
@@ -37,15 +31,20 @@ void calcIonFlux(const GV& gv, const GFS& gfs, const U& u, const PG& pg, C& ip, 
 
 
 //  Dune::FieldVector<typename PhiDGF::Traits::RangeType,dim> gradphi;
-  typename Dune::PDELab::DiscreteGridFunctionGradient < PhiGFSS, U>::Traits::RangeType gradphi;
-  typename Dune::PDELab::DiscreteGridFunctionGradient < CpGFSS, U>::Traits::RangeType gradCp;
-  typename Dune::PDELab::DiscreteGridFunctionGradient < CmGFSS, U>::Traits::RangeType gradCm;
+  typename Dune::PDELab::DiscreteGridFunctionGradient < PhiGFS, UPhi>::Traits::RangeType gradphi;
+  typename Dune::PDELab::DiscreteGridFunctionGradient < CpGFS, UCp>::Traits::RangeType gradCp;
+  typename Dune::PDELab::DiscreteGridFunctionGradient < CmGFS, UCm>::Traits::RangeType gradCm;
   
-  typename Dune::PDELab::DiscreteGridFunctionGradient < PhiGFSS, U>::Traits::RangeType i;
+  typename Dune::PDELab::DiscreteGridFunctionGradient < PhiGFS, UPhi>::Traits::RangeType i;
 
   const int codim=0;
   typedef typename GV::template Codim<0>::template Partition
        <Dune::Interior_Partition>::Iterator LeafIterator;
+
+  for (int i = 0; i<im.size(); i++) {
+      im[i][0]=0;
+      ip[i][0]=0;
+  }
 
 //    // loop over quadrature points
   for (LeafIterator it = 

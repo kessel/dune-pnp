@@ -4,8 +4,8 @@
 // Set geometry
 box_height = 2.;
 box_width = 10;
-outer_refinement = 1.;
-wall_refinement = 0.1;
+outer_refinement = 1.2;
+wall_refinement = 0.2;
 
 // Setup mesh
 Point(1) = {0, 0, 0, wall_refinement};
