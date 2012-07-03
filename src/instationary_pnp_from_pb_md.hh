@@ -16,6 +16,20 @@
 #include "diffusion_toperator.hh"
 //#include<dune/istl/superlu.hh>
 //#include<dune/pdelab/backend/seqistlsolverbackend.hh>
+//
+#define BCGS_SSORk    1
+#define BCGS_NOPREC   2
+#define CG_NOPREC     3
+#define CG_Jacobi     4
+#define CG_AMG_SSOR   5
+
+#ifndef PDEGREE 
+#define PDEGREE 1
+#endif
+
+#ifndef LINEARSOLVER
+#define LINEARSOLVER BCGS_SSORk
+#endif
 
 template<typename GV, typename RF>
 class Phi0Initial
@@ -108,7 +122,7 @@ void instationary_pnp_md(Sysparams s, GV gv, std::vector<int> boundaryIndexToEnt
 
 
 
-  typedef Dune::PDELab::Pk2DLocalFiniteElementMap<GV, Coord,Real, 1> PbFEM;
+  typedef Dune::PDELab::Pk2DLocalFiniteElementMap<GV, Coord,Real, PDEGREE> PbFEM;
   PbFEM pbFem(gv);
   typedef Dune::PDELab::NonoverlappingConformingDirichletConstraints PbCON;     // constraints class
   PbCON pbCon;
@@ -171,8 +185,31 @@ void instationary_pnp_md(Sysparams s, GV gv, std::vector<int> boundaryIndexToEnt
   typedef Dune::PDELab::GridOperator     <PbGFS,PbGFS,PbLOP,MBE,double, double, double,PbCC,PbCC,true> PbGO;
   PbGO pbgo(pbGFS,pbcc,pbGFS,pbcc,pblop);
   
+#if LINEARSOLVER == BCGS_SSORk
   typedef Dune::PDELab::ISTLBackend_NOVLP_BCGS_SSORk<PbGO> PbLS; 
   PbLS pbls( pbGFS, s.linearSolverIterations, 1, s.verbosity );
+#endif
+
+#if LINEARSOLVER == BCGS_NOPREC
+    typedef Dune::PDELab::ISTLBackend_NOVLP_BCGS_NOPREC<PbGFS> PbLS;
+    PbLS pbls( pbGFS, s.linearSolverIterations, s.verbosity );
+#endif
+
+#if LINEARSOLVER == CG_NOPREC
+    typedef Dune::PDELab::ISTLBackend_NOVLP_CG_NOPREC<PbGFS> PbLS;
+    PbLS pbls( pbGFS, s.linearSolverIterations, s.verbosity );
+#endif
+
+#if LINEARSOLVER == CG_Jacobi
+    typedef Dune::PDELab::ISTLBackend_NOVLP_CG_Jacobi<PbGFS> PbLS;
+    PbLS pbls( pbGFS, s.linearSolverIterations, s.verbosity );
+#endif
+
+#if LINEARSOLVER == CG_AMG_SSOR
+    typedef Dune::PDELab::ISTLBackend_NOVLP_CG_AMG_SSOR<PbGOS,double> PbLS;
+    PbLS pbls( pbGFS, 2, s.linearSolverIterations, s.verbosity );
+#endif
+
 
   typedef Dune::PDELab::Newton<PbGO,PbLS,PbU> PbNEWTON;
   PbNEWTON pbnewton(pbgo,pbu,pbls);
@@ -205,9 +242,9 @@ void instationary_pnp_md(Sysparams s, GV gv, std::vector<int> boundaryIndexToEnt
 
   // Here comes the PNP Part:
   
-  typedef Dune::PDELab::Pk2DLocalFiniteElementMap<GV, Coord,Real, 1> PhiFEM;
-  typedef Dune::PDELab::Pk2DLocalFiniteElementMap<GV, Coord,Real, 1> CpFEM;
-  typedef Dune::PDELab::Pk2DLocalFiniteElementMap<GV, Coord,Real, 1> CmFEM;
+  typedef Dune::PDELab::Pk2DLocalFiniteElementMap<GV, Coord,Real, PDEGREE> PhiFEM;
+  typedef Dune::PDELab::Pk2DLocalFiniteElementMap<GV, Coord,Real, PDEGREE> CpFEM;
+  typedef Dune::PDELab::Pk2DLocalFiniteElementMap<GV, Coord,Real, PDEGREE> CmFEM;
   PhiFEM phiFem(gv);
   CpFEM cpFEM(gv);
   CmFEM cmFEM(gv);
@@ -305,7 +342,7 @@ void instationary_pnp_md(Sysparams s, GV gv, std::vector<int> boundaryIndexToEnt
 
   typedef Dune::PDELab::StationaryLinearProblemSolver<PhiGO,PbLS,UPhi> SLP;
   SLP slp(phigo,uphi,pbls,1e-10);
-  slp.apply();
+
 
 
   dw.writeData(phiGFS, uphi, "phi1.dat");

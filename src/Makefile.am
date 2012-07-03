@@ -1,7 +1,8 @@
 
 SUBDIRS =
 
-noinst_PROGRAMS = dune_pnp 
+noinst_PROGRAMS = dune_pnp
+EXTRA_PROGRAMS =  dune_pnp_BCGS_SSORk_1 dune_pnp_BCGS_SSORk_2 dune_pnp_BCGS_NOPREC_1 dune_pnp_BCGS_NOPREC_2  
 
 dune_pnp_SOURCES = sysparams.cc dune_pnp.cc pnp_solver_main.cc GridLearning.cc
 
@@ -39,4 +40,22 @@ AUTOMAKE_OPTIONS = foreign 1.5
 DISTCHECK_CONFIGURE_FLAGS = --with-dune-common=$(DUNE_COMMON_ROOT) --with-dune-grid=$(DUNE_GRID_ROOT) --with-dune-istl=$(DUNE_ISTL_ROOT) --with-dune-pdelab=$(DUNE_PDELAB_ROOT)  CXX="$(CXX)" CC="$(CC)"
 
 include $(top_srcdir)/am/global-rules
+
+#define BCGS_SSORk    1
+#define BCGS_NOPREC   2
+#define CG_NOPREC     3
+#define CG_Jacobi     4
+#define CG_AMG_SSOR   5
+
+dune_pnp_BCGS_SSORk_1_SOURCES=$(dune_pnp_SOURCES)
+dune_pnp_BCGS_SSORk_1_CPPFLAGS=$(dune_pnp_CPPFLAGS) -DPDEGREE=1 -DLINEARSOLVER=1
+dune_pnp_BCGS_SSORk_1_LDFLAGS=$(dune_pnp_LDFLAGS)
+dune_pnp_BCGS_SSORk_2_SOURCES=$(dune_pnp_SOURCES)
+dune_pnp_BCGS_SSORk_2_CPPFLAGS=$(dune_pnp_CPPFLAGS) -DPDEGREE=2 -DLINEARSOLVER=1
+dune_pnp_BCGS_SSORk_2_LDFLAGS=$(dune_pnp_LDFLAGS)
+dune_pnp_BCGS_NOPREC_1_CPPFLAGS=$(dune_pnp_CPPFLAGS) -DPDEGREE=1 -DLINEARSOLVER=2
+dune_pnp_BCGS_NOPREC_1_LDFLAGS=$(dune_pnp_LDFLAGS)
+dune_pnp_BCGS_NOPREC_1_SOURCES=$(dune_pnp_SOURCES)
+dune_pnp_BCGS_NOPREC_2_CPPFLAGS=$(dune_pnp_CPPFLAGS) -DPDEGREE=2 -DLINEARSOLVER=2
+dune_pnp_BCGS_NOPREC_2_LDFLAGS=$(dune_pnp_LDFLAGS)
 
