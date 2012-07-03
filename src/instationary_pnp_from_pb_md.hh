@@ -206,7 +206,7 @@ void instationary_pnp_md(Sysparams s, GV gv, std::vector<int> boundaryIndexToEnt
 #endif
 
 #if LINEARSOLVER == CG_AMG_SSOR
-    typedef Dune::PDELab::ISTLBackend_NOVLP_CG_AMG_SSOR<PbGOS,double> PbLS;
+    typedef Dune::PDELab::ISTLBackend_NOVLP_CG_AMG_SSOR<PbGO,double> PbLS;
     PbLS pbls( pbGFS, 2, s.linearSolverIterations, s.verbosity );
 #endif
 

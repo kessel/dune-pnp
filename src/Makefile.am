@@ -2,7 +2,6 @@
 SUBDIRS =
 
 noinst_PROGRAMS = dune_pnp
-EXTRA_PROGRAMS =  dune_pnp_BCGS_SSORk_1 dune_pnp_BCGS_SSORk_2 dune_pnp_BCGS_NOPREC_1 dune_pnp_BCGS_NOPREC_2  
 
 dune_pnp_SOURCES = sysparams.cc dune_pnp.cc pnp_solver_main.cc GridLearning.cc
 
@@ -47,15 +46,67 @@ include $(top_srcdir)/am/global-rules
 #define CG_Jacobi     4
 #define CG_AMG_SSOR   5
 
-dune_pnp_BCGS_SSORk_1_SOURCES=$(dune_pnp_SOURCES)
-dune_pnp_BCGS_SSORk_1_CPPFLAGS=$(dune_pnp_CPPFLAGS) -DPDEGREE=1 -DLINEARSOLVER=1
-dune_pnp_BCGS_SSORk_1_LDFLAGS=$(dune_pnp_LDFLAGS)
-dune_pnp_BCGS_SSORk_2_SOURCES=$(dune_pnp_SOURCES)
-dune_pnp_BCGS_SSORk_2_CPPFLAGS=$(dune_pnp_CPPFLAGS) -DPDEGREE=2 -DLINEARSOLVER=1
-dune_pnp_BCGS_SSORk_2_LDFLAGS=$(dune_pnp_LDFLAGS)
-dune_pnp_BCGS_NOPREC_1_CPPFLAGS=$(dune_pnp_CPPFLAGS) -DPDEGREE=1 -DLINEARSOLVER=2
-dune_pnp_BCGS_NOPREC_1_LDFLAGS=$(dune_pnp_LDFLAGS)
-dune_pnp_BCGS_NOPREC_1_SOURCES=$(dune_pnp_SOURCES)
-dune_pnp_BCGS_NOPREC_2_CPPFLAGS=$(dune_pnp_CPPFLAGS) -DPDEGREE=2 -DLINEARSOLVER=2
-dune_pnp_BCGS_NOPREC_2_LDFLAGS=$(dune_pnp_LDFLAGS)
+EXTRA_PROGRAMS= dune_pnp_BCGS_SSORk_0 dune_pnp_BCGS_SSORk_1 dune_pnp_BCGS_SSORk_2 dune_pnp_BCGS_NOPREC_0 dune_pnp_BCGS_NOPREC_1 dune_pnp_BCGS_NOPREC_2 dune_pnp_CG_NOPREC_0 dune_pnp_CG_NOPREC_1 dune_pnp_CG_NOPREC_2 dune_pnp_CG_Jacobi_0 dune_pnp_CG_Jacobi_1 dune_pnp_CG_Jacobi_2 dune_pnp_CG_AMG_SSOR_0 dune_pnp_CG_AMG_SSOR_1 dune_pnp_CG_AMG_SSOR_2 
 
+
+
+dune_pnp_BCGS_SSORk_1_SOURCES =$(dune_pnp_SOURCES)
+dune_pnp_BCGS_SSORk_1_CPPFLAGS=$(dune_pnp_CPPFLAGS) -DPDEGREE=1 -DLINEARSOLVER=1
+dune_pnp_BCGS_SSORk_1_LDFLAGS =$(dune_pnp_LDFLAGS)
+        
+dune_pnp_BCGS_SSORk_2_SOURCES =$(dune_pnp_SOURCES)
+dune_pnp_BCGS_SSORk_2_CPPFLAGS=$(dune_pnp_CPPFLAGS) -DPDEGREE=2 -DLINEARSOLVER=1
+dune_pnp_BCGS_SSORk_2_LDFLAGS =$(dune_pnp_LDFLAGS)
+        
+dune_pnp_BCGS_SSORk_3_SOURCES =$(dune_pnp_SOURCES)
+dune_pnp_BCGS_SSORk_3_CPPFLAGS=$(dune_pnp_CPPFLAGS) -DPDEGREE=3 -DLINEARSOLVER=1
+dune_pnp_BCGS_SSORk_3_LDFLAGS =$(dune_pnp_LDFLAGS)
+        
+dune_pnp_BCGS_NOPREC_1_SOURCES =$(dune_pnp_SOURCES)
+dune_pnp_BCGS_NOPREC_1_CPPFLAGS=$(dune_pnp_CPPFLAGS) -DPDEGREE=1 -DLINEARSOLVER=2
+dune_pnp_BCGS_NOPREC_1_LDFLAGS =$(dune_pnp_LDFLAGS)
+        
+dune_pnp_BCGS_NOPREC_2_SOURCES =$(dune_pnp_SOURCES)
+dune_pnp_BCGS_NOPREC_2_CPPFLAGS=$(dune_pnp_CPPFLAGS) -DPDEGREE=2 -DLINEARSOLVER=2
+dune_pnp_BCGS_NOPREC_2_LDFLAGS =$(dune_pnp_LDFLAGS)
+        
+dune_pnp_BCGS_NOPREC_3_SOURCES =$(dune_pnp_SOURCES)
+dune_pnp_BCGS_NOPREC_3_CPPFLAGS=$(dune_pnp_CPPFLAGS) -DPDEGREE=3 -DLINEARSOLVER=2
+dune_pnp_BCGS_NOPREC_3_LDFLAGS =$(dune_pnp_LDFLAGS)
+        
+dune_pnp_CG_NOPREC_1_SOURCES =$(dune_pnp_SOURCES)
+dune_pnp_CG_NOPREC_1_CPPFLAGS=$(dune_pnp_CPPFLAGS) -DPDEGREE=1 -DLINEARSOLVER=3
+dune_pnp_CG_NOPREC_1_LDFLAGS =$(dune_pnp_LDFLAGS)
+        
+dune_pnp_CG_NOPREC_2_SOURCES =$(dune_pnp_SOURCES)
+dune_pnp_CG_NOPREC_2_CPPFLAGS=$(dune_pnp_CPPFLAGS) -DPDEGREE=2 -DLINEARSOLVER=3
+dune_pnp_CG_NOPREC_2_LDFLAGS =$(dune_pnp_LDFLAGS)
+        
+dune_pnp_CG_NOPREC_3_SOURCES =$(dune_pnp_SOURCES)
+dune_pnp_CG_NOPREC_3_CPPFLAGS=$(dune_pnp_CPPFLAGS) -DPDEGREE=3 -DLINEARSOLVER=3
+dune_pnp_CG_NOPREC_3_LDFLAGS =$(dune_pnp_LDFLAGS)
+        
+dune_pnp_CG_Jacobi_1_SOURCES =$(dune_pnp_SOURCES)
+dune_pnp_CG_Jacobi_1_CPPFLAGS=$(dune_pnp_CPPFLAGS) -DPDEGREE=1 -DLINEARSOLVER=4
+dune_pnp_CG_Jacobi_1_LDFLAGS =$(dune_pnp_LDFLAGS)
+        
+dune_pnp_CG_Jacobi_2_SOURCES =$(dune_pnp_SOURCES)
+dune_pnp_CG_Jacobi_2_CPPFLAGS=$(dune_pnp_CPPFLAGS) -DPDEGREE=2 -DLINEARSOLVER=4
+dune_pnp_CG_Jacobi_2_LDFLAGS =$(dune_pnp_LDFLAGS)
+        
+dune_pnp_CG_Jacobi_3_SOURCES =$(dune_pnp_SOURCES)
+dune_pnp_CG_Jacobi_3_CPPFLAGS=$(dune_pnp_CPPFLAGS) -DPDEGREE=3 -DLINEARSOLVER=4
+dune_pnp_CG_Jacobi_3_LDFLAGS =$(dune_pnp_LDFLAGS)
+        
+dune_pnp_CG_AMG_SSOR_1_SOURCES =$(dune_pnp_SOURCES)
+dune_pnp_CG_AMG_SSOR_1_CPPFLAGS=$(dune_pnp_CPPFLAGS) -DPDEGREE=1 -DLINEARSOLVER=5
+dune_pnp_CG_AMG_SSOR_1_LDFLAGS =$(dune_pnp_LDFLAGS)
+        
+dune_pnp_CG_AMG_SSOR_2_SOURCES =$(dune_pnp_SOURCES)
+dune_pnp_CG_AMG_SSOR_2_CPPFLAGS=$(dune_pnp_CPPFLAGS) -DPDEGREE=2 -DLINEARSOLVER=5
+dune_pnp_CG_AMG_SSOR_2_LDFLAGS =$(dune_pnp_LDFLAGS)
+        
+dune_pnp_CG_AMG_SSOR_3_SOURCES =$(dune_pnp_SOURCES)
+dune_pnp_CG_AMG_SSOR_3_CPPFLAGS=$(dune_pnp_CPPFLAGS) -DPDEGREE=3 -DLINEARSOLVER=5
+dune_pnp_CG_AMG_SSOR_3_LDFLAGS =$(dune_pnp_LDFLAGS)
+        
