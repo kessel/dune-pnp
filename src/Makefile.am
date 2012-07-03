@@ -45,8 +45,8 @@ include $(top_srcdir)/am/global-rules
 #define CG_NOPREC     3
 #define CG_Jacobi     4
 #define CG_AMG_SSOR   5
-
-EXTRA_PROGRAMS= dune_pnp_BCGS_SSORk_0 dune_pnp_BCGS_SSORk_1 dune_pnp_BCGS_SSORk_2 dune_pnp_BCGS_NOPREC_0 dune_pnp_BCGS_NOPREC_1 dune_pnp_BCGS_NOPREC_2 dune_pnp_CG_NOPREC_0 dune_pnp_CG_NOPREC_1 dune_pnp_CG_NOPREC_2 dune_pnp_CG_Jacobi_0 dune_pnp_CG_Jacobi_1 dune_pnp_CG_Jacobi_2 dune_pnp_CG_AMG_SSOR_0 dune_pnp_CG_AMG_SSOR_1 dune_pnp_CG_AMG_SSOR_2 
+        
+EXTRA_PROGRAMS= dune_pnp_BCGS_SSORk_1 dune_pnp_BCGS_SSORk_2 dune_pnp_BCGS_SSORk_3 dune_pnp_BCGS_NOPREC_1 dune_pnp_BCGS_NOPREC_2 dune_pnp_BCGS_NOPREC_3 dune_pnp_CG_NOPREC_1 dune_pnp_CG_NOPREC_2 dune_pnp_CG_NOPREC_3 dune_pnp_CG_Jacobi_1 dune_pnp_CG_Jacobi_2 dune_pnp_CG_Jacobi_3 dune_pnp_CG_AMG_SSOR_1 dune_pnp_CG_AMG_SSOR_2 dune_pnp_CG_AMG_SSOR_3 
 
 
 
