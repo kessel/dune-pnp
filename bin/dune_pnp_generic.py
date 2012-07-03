@@ -1,3 +1,4 @@
+#!/usr/bin/python
 
 import sys, os
 
@@ -12,6 +13,9 @@ parser.add_option("-s", "--linearsolver", dest="linearsolver", default="BCGS_SSO
                           help="choose linear solver", metavar="LINEARSOLVER")
 parser.add_option("-p", "--pdegree", dest="pdegree", default=1,
                           help="choose degree of ansatz polynomials", metavar="PDEGREE")
+
+parser.add_option("-n", "--np", dest="np", default=1,
+                          help="number of processors", metavar="NP")
 
 (options, args) = parser.parse_args()
 
@@ -31,6 +35,7 @@ oldpath=os.path.abspath(os.path.curdir)
 os.chdir(pathname+"/../src/")
 os.system("make "+progname)
 os.chdir(oldpath)
-os.system(pathname+"/../src/"+progname+" "+args[0])
+if len(args) > 0:
+    os.system("mpirun -np "+str(options.np)+" " + pathname+"/../src/"+progname+" "+args[0])
 
 
