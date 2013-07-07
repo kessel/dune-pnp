@@ -1,15 +1,14 @@
 
-dna_refinement = .4;
-inner_pore_refinement = .6;
-outer_pore_refinement = .9;
-box_refinement = 3.;
-pore_radius_left = 5;
+dna_refinement = 2.;
+inner_pore_refinement = 2.;
+outer_pore_refinement = 2.;
+box_refinement = 6.;
+pore_radius_left = 10;
 pore_radius=10;
 
 pore_length = 20;
 
 dna_length = 20;
-dna_radius = 1;
 
 box_size_z = 100;
 box_size_r = 55;
@@ -36,17 +35,17 @@ Circle(3) = { 1, 3, 2 };
 Circle(4) = { 5, 7, 6 };
 
 Point(8) = { -dna_length/2, 0, 0, dna_refinement };
-Point(9) = { -dna_length/2 + dna_radius, dna_radius, 0, dna_refinement };
-Point(10) = { -dna_length/2 + dna_radius,  0, 0, dna_refinement };
+//Point(9) = { -dna_length/2 , dna_radius, 0, dna_refinement };
+//Point(10) = { -dna_length/2 + dna_radius,  0, 0, dna_refinement };
 
 Point(11) = { +dna_length/2, 0, 0, dna_refinement };
-Point(12) = { +dna_length/2 - dna_radius, dna_radius, 0, dna_refinement };
-Point(13) = { +dna_length/2 - dna_radius,  0, 0, dna_refinement };
+//Point(12) = { +dna_length/2 - dna_radius, dna_radius, 0, dna_refinement };
+Point(13) = { +dna_length/2 ,  0, 0, dna_refinement };
 
-Circle(5) = { 8, 10, 9 };
-Circle(6) = { 11, 13, 12 };
+//Circle(5) = { 8, 10, 9 };
+//Circle(6) = { 11, 13, 12 };
 
-Line(7) = { 9, 12 };
+Line(7) = { 8, 11 };
 
 // Box
 Point(14) = { - box_size_z/2, 0, 0, box_refinement };
@@ -65,13 +64,12 @@ Line(13) = { 16, 17 };
 
 
 
-Line Loop(112) = {1, 4, -2, -3, -111, 9, -10, -8, 5, 7, -6, 11, 13, -12};
+Line Loop(112) = {1, 4, -2, -3, -111, 9, -10, -8,  7,  11, 13, -12};
 Plane Surface(113) = {112};
-Physical Line(0) = {5, 7, 6};
-Physical Line(1) = {111, 3, 2, 4, 1};
-Physical Line(2) = {11, 8};
-Physical Line(3) = {10};
-Physical Line(4) = {13};
-Physical Line(5) = {9};
-Physical Line(6) = {12};
+Physical Line(0) = {111, 3, 2, 4, 1};
+Physical Line(1) = {11,7, 8};
+Physical Line(2) = {10};
+Physical Line(3) = {13};
+Physical Line(4) = {9};
+Physical Line(5) = {12};
 Physical Surface(118) = {113};

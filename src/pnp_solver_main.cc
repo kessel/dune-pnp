@@ -54,6 +54,7 @@
 #include "diff_operator.hh"
 #include "example03_toperator.hh"
 #include "example03_operator.hh"
+#include "ifluxupdate.hh"
 
 
 //#include "stationary_diffusion.hh"
@@ -113,6 +114,14 @@ void PnpSolverMain::run(std::string configfile) {
   GV gv = grid->leafView();
 
   instationary_pnp_md<GV>(s, gv, boundaryIndexToEntity, elementIndexToEntity, helper);
+
+ 
+//  std::vector<double> temp;
+//  temp.resize(boundaryIndexToEntity.size(), 0);
+//
+//  iFluxUpdate<GV, std::vector<double>, Sysparams> ifluxupdate(gv, temp, s, boundaryIndexToEntity);
+ 
+
 
   /*
 

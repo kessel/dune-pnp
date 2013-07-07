@@ -334,6 +334,12 @@ void instationary_pnp_md(Sysparams s, GV gv, std::vector<int> boundaryIndexToEnt
   dw.writeData(cpGFS, ucp, "cp.dat");
   dw.writeData(cmGFS, ucm, "cm.dat");
 
+  Dune::VTKWriter<GV> phiwriter(gv,Dune::VTKOptions::conforming);
+  phiwriter.addVertexData(new Dune::PDELab::VTKGridFunctionAdapter<PhiDGF>(phiDGF,"phi"));
+  phiwriter.addVertexData(new Dune::PDELab::VTKGridFunctionAdapter<CpDGF>(cpDGF,"cp"));
+  phiwriter.addVertexData(new Dune::PDELab::VTKGridFunctionAdapter<CmDGF>(cmDGF,"cm"));
+
+
   typedef PoissonOperator<PhiBC_T, int, Sysparams, FluxContainer, CpDGF, CmDGF> PoissonLOP;
   PoissonLOP poissonlop(pbB_t, 1, s, fluxContainer, cpDGF, cmDGF);
 
@@ -430,6 +436,8 @@ void instationary_pnp_md(Sysparams s, GV gv, std::vector<int> boundaryIndexToEnt
       dw.writeData(cpGFS, ucp, std::string(filename));
       sprintf(filename, "cm%03d.dat", output_counter);
       dw.writeData(cmGFS, ucm, std::string(filename));
+      sprintf(filename, "data%03d", output_counter);
+      phiwriter.write(filename,Dune::VTKOptions::binaryappended);
   
 
       calcIonFlux<GV, PhiGFS, CpGFS, CmGFS, UPhi, UCp, UCm, PG, std::vector<I>, Sysparams >(gv, phiGFS, cpGFS, cmGFS, uphi, ucp, ucm, boundaryIndexToEntity, ip, im, s);
@@ -451,9 +459,6 @@ void instationary_pnp_md(Sysparams s, GV gv, std::vector<int> boundaryIndexToEnt
 
 //  Dune::PDELab::set_nonconstrained_dofs(cc,0.1,u);
 
-//  Dune::GnuplotWriter<GV> gnuplotwriter(gv);
-//  gnuplotwriter.addVertexData<template UPhi>(uphi,"phi");
-//  gnuplotwriter.write("phi.dat"); 
 
 
  /* 
